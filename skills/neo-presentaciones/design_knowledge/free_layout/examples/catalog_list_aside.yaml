@@ -1,0 +1,17 @@
+expresses: {layout: list_aside}
+# Roles de contenido de una slide de ejemplo: el validador exige que cada uno quede en un bloque.
+roles: [kicker, title, tags, list_title, item:1, item:2, item:3, aside:1, aside:1:icon, aside:2]
+free_layout:
+  mode: light
+  header: {title_style: title}
+  body:
+    row:
+      - span: 6
+        stack:
+          - block: {component: list_title, units: [list_title]}
+            optional: true
+          - repeat: {unit: item, columns: 1, max: 8}
+            block: {component: step, numbered: auto}   # auto: usa el número del autor si lo hay
+      - span: 6
+        repeat: {unit: aside, columns: 1, max: 3}
+        block: {component: aside, tone: dark, icon: auto}

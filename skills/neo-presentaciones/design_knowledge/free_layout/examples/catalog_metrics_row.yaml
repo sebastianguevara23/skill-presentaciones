@@ -1,0 +1,9 @@
+expresses: {layout: metrics_row}
+# Roles de contenido de una slide de ejemplo: el validador exige que cada uno quede en un bloque.
+roles: [title, metric:1:value, metric:1:label, metric:2:value, metric:2:label, metric:3:value, metric:3:description]
+free_layout:
+  mode: light
+  header: {title_style: title}
+  body:
+    repeat: {unit: metric, columns: auto, max: 5, uniform: true}
+    block: {component: metric_card}

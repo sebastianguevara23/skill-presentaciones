@@ -1,0 +1,17 @@
+layout_id: closing_01
+semantic_role: closing
+mode: light
+reference: "Referencia v2, slide 32: despedida light obligatoria con logo, mensaje, línea y footer"
+brand_required: [brand_logo, brand_phrase]
+slots:
+  title:    {required: false, max_lines: 2}
+  subtitle: {required: false}
+geometry:
+  x: 45
+  width: 630
+  logo_box: [310.51, 149.01, 96.73, 19.27]
+  logo_box_with_text: [310.51, 149.01, 96.73, 19.27]
+  text_box: [152.63, 185.12, 414.76, 42]
+  underline_box: [345, 241, 30, 0.6]
+  text_gap: 24
+  subtitle_gap: 10

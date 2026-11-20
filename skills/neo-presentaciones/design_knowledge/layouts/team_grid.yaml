@@ -1,0 +1,28 @@
+layout_id: team_grid_01
+semantic_role: people
+mode: light
+reference: "Familia team_grid: ficha foto-nombre-rol como un solo componente"
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  members:  {count: "1-10", roles: [title, label, body, note], attach: [photo]}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  card_gutter: 12
+  # Ficha sin card: foto circular con aro azul (`photo_ring`), nombre y rol debajo.
+  # `member_card: true` vuelve a poner la card blanca detrás.
+  member_card: false
+  row_gap: 8
+  photo_size: 40
+  max_columns: 5         # si la rejilla por defecto no cabe, se prueban filas más anchas hasta aquí
+  photo_max: 96          # con pocas fichas la foto crece hasta aquí en vez de dejar la slide vacía
+  # diez fichas: dos filas de cinco (equipo completo de una propuesta); si no caben, se parte
+  columns_by_count: {1: 1, 2: 2, 3: 3, 4: 4, 5: 3, 6: 3, 7: 4, 8: 4, 9: 3, 10: 5}

@@ -1,0 +1,22 @@
+layout_id: circles_01
+semantic_role: unit_overview
+mode: light
+reference: "Familia three_unit_overview: unidades como un grupo de círculos alineados"
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  circles:  {count: "2-4", roles: [number, title, label, body, note]}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 20
+  circle_gap: 22
+  max_diameter: 150
+  focus_scale: 1.2
+  text_inset: 0.72

@@ -1,0 +1,24 @@
+layout_id: three_cards_01
+semantic_role: parallel_items
+mode: light
+reference: "Credenciales slide 17; SPSA slide 13"
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  cards:    {# Rango, no número fijo: la política de partición por desborde (convenciones 2026-09-17)
+    # reparte en slides de dos tarjetas anchas cuando cuatro no caben.
+    count: "2-3", roles: [number, title, label, body, note], attach: [icon]}
+  banner:   {required: false, multiple: true}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  card_gutter: 18
+  icon_size: 26
+  banner_gap: 12

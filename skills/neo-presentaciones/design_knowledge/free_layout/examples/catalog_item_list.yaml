@@ -1,0 +1,10 @@
+expresses: {layout: item_list}
+# Roles de contenido de una slide de ejemplo: el validador exige que cada uno quede en un bloque.
+roles: [kicker, title, item:1, item:2, item:3, item:4, item:5, item:6, item:7]
+free_layout:
+  mode: light
+  header: {title_style: title}
+  body:
+    # Hasta 5 filas en una columna; con más, dos columnas llenadas por columna (orden de lectura).
+    repeat: {unit: item, columns: auto, order: column, max_rows: 5, max: 12}
+    block: {component: item_row, style: card}     # style: rule = fila sin card, línea y flecha

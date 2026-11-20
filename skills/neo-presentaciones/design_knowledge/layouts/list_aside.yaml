@@ -1,0 +1,27 @@
+layout_id: list_aside_01
+semantic_role: activity_guide
+mode: light
+reference: "Guías de dinámica y conversatorio: pasos numerados a la izquierda, paneles a la derecha"
+slots:
+  kicker:     {required: false}
+  title:      {required: true, max_lines: 2}
+  subtitle:   {required: false}
+  tags:       {multiple: true}
+  list_title: {required: false}
+  items:      {count: "1-8", roles: [number, title, label, body, note]}
+  aside:      {groups: "0-3", attach: [icon]}
+  notes:      {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  footer_air: 2   # el auditor de marca pide 12 pt entre contenido y footer (360.4)
+  body_gap: 16
+  list_ratio: 0.5
+  column_gap: 22
+  item_gap: 10
+  max_item_gap: 22
+  tag_top: 33

@@ -1,0 +1,562 @@
+version: neo_historical_v2
+
+audit_contract:
+  geometry_zone_pt: [30, 24, 690, 375]
+  brand_zone_pt: [45, 31.4, 675, 375]
+  output_canvas_px: [1920, 1080]
+  output_safe_zone_px: [80, 64, 1840, 1000]
+  required_checks: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+  visual_quality_failure_codes: [visually_cramped, visually_unbalanced, weak_hierarchy, inconsistent_rhythm, excessive_card_space]
+  style_integrity_audit:
+    failure_codes: [component_style_drift, shadow_drift, typography_drift, footer_scale_drift, off_palette_text, noncanonical_link_color]
+    compare_scope: [same_family, repeated_component, paired_slide]
+    compare_properties: [fill, line_color, line_width, radius, shadow, padding, typography, alignment, footer_size]
+    allowed_variants: [content, card_count, documented_layout_variant, intentional_active_state]
+    rule: repeated_components_must_match_canonically_unless_the_variant_is_registered
+    visual_acceptance: render_and_compare_representative_slides_before_delivery
+  agent_may_adjust: [box_size, spacing, grid, paragraph_width, component_distribution]
+  content_lock: [no_new_text, no_summary, no_content_deletion, no_reordering, min_font_size_11]
+  issue_record_fields: [slide_id, family, source_reference, symptom, measured_geometry, cause, applied_fix, acceptance_test, reusable_pattern]
+  base_design_owner: agent_and_mcp
+
+# Registro de navegación del deck de inducción. Los números son 1-based sobre su versión
+# corregida; los frame_names son las claves de Figma.
+families:
+  title_slide:
+    label: portada_light_obligatoria
+    background: canonical_light
+    source_reference: "Referencia v2, slide 1, revisión del usuario 2026-09-30"
+    validate_after_layout: [cover_light_mode, text_contrast, safe_zone]
+  table_of_contents:
+    label: tabla_de_contenidos_indice
+    output_slides: [3, 4, 19, 40, 61, 69, 72, 75]
+    frame_names:
+      - slide-03-agenda
+      - slide-04-agenda-s1
+      - slide-18-toc-s2
+      - slide-38-toc-equipo
+      - slide-59-toc-herramientas
+      - slide-66-toc-tips
+      - slide-69-toc-beneficios
+      - slide-72-toc-fyi
+    style:
+      background: light
+      title: "Tabla de contenidos"
+      title_size_pt: 36
+      title_y_pt: 77.4
+      content_left_pt: 45
+      logo_box_pt: [45, 31.4, 96.7, 19.3]
+      footer_box_pt: [45, 360.4, 160, 14.6]
+      card_state_style:
+        active_fill: 000033
+        active_text: FFFFFF
+        inactive_fill: FFFFFF
+        inactive_border: D9E2FC
+        inactive_text: 000033
+        number_pill_fill: 2D5BFF
+      slide3_variant: all_cards_navy_reference
+      card_state_style_applies_to_output_slides: [4, 19, 40, 61, 69, 72, 75]
+    active_card_by_output_slide: {3: 1, 4: 1, 19: 2, 40: 3, 61: 4, 69: 5, 72: 6, 75: 7}
+
+  # Caso concreto registrado desde la revisión manual de un deck interno de NEO.
+  agenda_list:
+    label: agenda_con_ilustracion_secundaria
+    output_deck: "deck interno de NEO"
+    output_slides: [5]
+    source_reference: "captura del usuario, slide 5, 2026-09-23"
+    preserve_content: true
+    layout: lista_vertical_con_ilustracion_secundaria
+    safe_zone_pt: [45, 31.4, 675, 375]
+    card_box_pt: [45, 125.9, 415, 208.2]
+    list_box_pt: [65, 142, 355, 176]
+    list_style: {font: Montserrat, size_pt: 18, color: 000033, bullet_color: 2D5BFF, space_after_pt: 9}
+    image_box_pt: [510, 183, 165, 92.7]
+    image_rule: preserve_full_image_proportionally_and_keep_secondary_to_agenda_items
+    acceptance: [four_ordered_agenda_items, image_within_registered_box, no_new_or_removed_text, source_image_and_link_integrity, geometry, render, visual_quality, text_palette]
+
+  section_divider:
+    label: separador_de_seccion
+    output_slides: [14, 20, 34, 43, 45, 47, 53, 56]
+    style:
+      canonical_slide: 2
+      format: canonical_slide_2
+      preserve_content: true
+      background: dark
+      logo_default: left
+      logo_box_pt: [45, 31.4, 96.7, 19.3]
+      title_box_pt: [45, 170, 630, 48]
+      subtitle_box_pt: [45, 232, 540, 48]
+      footer_box_pt: [45, 360.4, 160, 14.6]
+      title_style: {font: Montserrat Black, size_pt: 36, color: FFFFFF, emphasis_color: 9AAFFE}
+      title_multiline_line_spacing: 0.8   # título en dos líneas o más (salto del autor o corte)
+      title_emphasis_rule:
+        two_words: second_word
+        three_words_with_connector: final_meaningful_word
+        connectors: [y, '&']
+        connector_color: FFFFFF
+        single_word: base_color
+      single_word_companion: neo_outline_geometry
+      single_word_companion_required: true
+      single_word_copy_policy: no_invented_subtitle
+      subtitle_style: {font: Montserrat Medium, size_pt: 11, color: C5D5F7}
+      footer_style: {font: Montserrat, size_pt: 12, bold: true, color: C5D5F7}
+      background_layers: [canonical_dark_background]
+      background_asset: assets/brand/bg-dark-slide4.png
+
+  image_text_clients:
+    label: matriz_de_clientes_con_mensaje
+    output_slides: [9]
+    source_slide: "deck de inducción, slide 9"
+    background: canonical_light
+    preserve_content: true
+    layout: source_image_left_message_right
+    safe_zone_pt: [30, 24, 690, 375]
+    image:
+      source: input_slide_9_picture
+      box_pt: [45, 55, 594, 315]
+      preserve_full_image: true
+      crop: false
+      deform: false
+      treatment: none
+      z_order: behind_text_and_brand
+    message_box_pt: [436.1, 220.1, 236.2, 120]
+    logo_box_pt: [45, 31.4, 96.7, 19.3]
+    footer_box_pt: [515, 360.4, 160, 14.6]
+    footer_move_reason: source_image_occupies_left_lower_safe_area
+    validate_after_layout: [source_image_present, text_presence, safe_zone, internal_overflow, visual_integrity, z_order]
+
+  image_heavy_special:
+    label: slides_especiales_imagenes
+    output_slides: [15, 16, 17]
+    preserve_text: true
+    allow_selective_image_removal: true
+    reference_composition: references/Prueba 1_ Onboarding.pptx
+    per_slide:
+      15:
+        remove_redundant_images: [photo:i2]
+        keep_and_reposition: [photo:i3]
+      16:
+        remove_redundant_images: [photo:i2, photo:i4]
+        keep_images: [photo:i1, photo:i3]
+      17:
+        preserve_collage: true
+        normalize_left_edge_to_pt: 45
+    image_captions:
+      line_spacing_multiple: 0.8
+      min_font_size_pt: 11
+    icon_text_layout:
+      min_gap_pt: 10
+      icon_box_pt: [24, 24]
+      text_start_x_min_pt: 80
+      validate_no_overlap: true
+    safe_zone_pt: [45, 31.4, 675, 375]
+    rule: remove_or_reposition_images_when_the_reference_does_so_to_preserve_hierarchy_and_safe_area
+
+  timeline:
+    label: transformaciones_neo
+    output_slides: [10]
+    card_count: 6
+    safe_zone_pt: [45, 31.4, 675, 375]
+    layout: 3_columns_by_2_rows
+    heading_box_pt: [187.9, 90, 360, 33.8]
+    card_geometry_pt: {width: 200, height: 88, row_tops: [150, 244], column_lefts: [45, 260, 475], column_gap: 15, row_gap: 6}
+    repeated_components_must_be_uniform: true
+    preserve_chronological_reading_order: true
+    preserve_all_duration_labels: true
+    title_wrap_strategy: natural_when_fit_explicit_only_when_needed
+    explicit_title_breaks_only: [2025]
+    title_line_spacing_multiple: 1.0
+    title_vertical_alignment: middle
+    duration_pill_vertical_alignment: middle
+    duration_pill_bottom_inset_pt: 4
+    no_orphan_words: true
+    validate_after_layout: [text_presence, card_alignment, internal_overflow, visual_integrity]
+
+  ai_maturity_levels:
+    label: niveles_de_uso_ia_separados
+    output_slides: [34, 35, 36]
+    background: canonical_light
+    preserve_content: true
+    split_policy:
+      source_slide: 34
+      shared_intro_owner: 34
+      repeat_shared_intro: false
+      followup_slides: [35, 36]
+      followup_layout: compact_maturity_component
+    title_box_pt: [45, 35, 412.5, 22]
+    shared_intro_box_pt: [45, 64, 630, 48]
+    followup_rail_y_pt: 77
+    followup_component_pt: [45, 95, 630, 200]
+    level_rail_pt: {lefts: [45, 257.5, 470], width: 205}
+    visual_quality_rule: split_slides must not clone shared explanatory copy
+    validate_after_layout: [text_presence, no_repeated_shared_intro, internal_overflow, safe_zone, visual_quality]
+
+  three_cards:
+    label: niveles_de_uso_ia
+    output_slides: [34]
+    background: canonical_light
+    preserve_content: true
+    safe_zone_pt: [45, 31.4, 675, 375]
+    title_box_pt: [45, 35, 630, 22]
+    intro_box_pt: [45, 64, 630, 48]
+    card_geometry_pt: {column_lefts: [45, 260, 473.5], top: 115, widths: [203, 201.5, 201.5], height: 198}
+    example_box_height_pt: 36
+    requirement_band_pt: [45, 322.1, 630, 33.5]
+    requirement_callout_pt: [500, 325, 175, 26]
+    visual_quality_rule: use_full_intro_width_and_keep_example_lines_inside_cards
+    validate_after_layout: [uniform_card_geometry, text_presence, internal_overflow, safe_zone, visual_quality, visual_integrity]
+
+  three_unit_overview:
+    label: tres_unidades_y_procesos_principales
+    output_slides: [29, 32]
+    reference_slide: 29
+    background: canonical_light
+    preserve_content: true
+    layout: aligned_three_circles
+    title_box_pt: [45, 102.9, 630, 22.3]
+    circle_geometry_pt:
+      small: {width: 127.4, height: 127.4, top: 164.2}
+      large: {width: 157.7, height: 157.7, top: 149}
+    variants:
+      29: {focus: center, labels: [Growth Together, Areas, Proyectos]}
+      32: {focus: right, labels: [Grow Together, Chapters, Proyectos]}
+    composition_rules:
+      circles_are_one_group: true
+      title_clearance_required: true
+      focus_circle_is_larger: true
+      preserve_label_content: true
+    validate_after_layout: [canonical_background, safe_zone, text_presence, internal_overflow, visual_integrity]
+
+  paired_process:
+    label: proceso_dos_slides_dos_columnas
+    output_slides: [38, 39]
+    canonical_layout: shared_two_process_cards
+    preserve_content: true
+    shared_geometry_required: true
+    shared_style_required: true
+    layout_variant: lifted_v2
+    card_geometry_pt: {left: 45, top: 107, width: 307.5, height: 220, gap: 15}
+    intro_box_pt: [45, 70, 630, 29.2]
+    header_component: rules_cards_header_v1
+    header_cap_pt: {height: 36, geometry: roundRect, fill: 000033}
+    header_square_base_pt: {top: 125, height: 18, geometry: rect, fill: 000033}
+    header_source_reference: {slide_id: 76, family: rules_cards}
+    responsibility_label_y_pt: 147
+    responsibility_body_pt: [163, 40]
+    divider_lines_pt: [205, 285]
+    bullet_body_pt: [215, 64]
+    output_label_y_pt: 291
+    output_value_y_pt: 309
+    wrap_policy:
+      preserve_card_inner_margins: true
+      no_orphan_words: true
+      split_policy:
+        shared_intro_owner: 38
+        repeat_shared_intro: false
+        followup_slides: [39]
+        followup_card_top_pt: 80
+        followup_layout: own_content_only
+      explicit_breaks:
+        38: "Embajador + Desarrollador asignado +\\nEquipo / Cliente"
+    intro_style: {font: Montserrat Medium, size_pt: 11, color: 000000}
+    body_style: {font: Montserrat, size_pt: 11, color: 000000}
+    bullet_style: {font: Montserrat, size_pt: 11, color: 000000, hanging_indent_pt: 7}
+    logo_box_pt: [578.3, 31.4, 96.7, 19.3]
+    footer_box_pt: [45, 360.4, 160, 14.6]
+    validate_after_layout: [shared_coordinates, shared_typography, connector_alignment, safe_zone, visual_integrity]
+
+  adr_framework:
+    label: marco_de_innovacion_adr
+    output_slides: [40]
+    background: canonical_light
+    preserve_content: true
+    layout: two_columns_five_rows
+    safe_zone_pt: [45, 31.4, 675, 375]
+    title_box_pt: [45, 31.4, 250, 22]
+    logo_box_pt: [578.3, 31.4, 96.7, 19.3]
+    intro_box_pt: [45, 100, 630, 34]
+    component_card_geometry_pt: {width: 307.5, height: 36, column_lefts: [45, 367.5], row_tops: [143, 182, 221, 260, 299], row_gap: 3}
+    context_clearance: {cards_below_intro_min_pt: 8, cta_below_cards_min_pt: 4, no_overlap_with_intro: true}
+    component_text_min_size_pt: 11
+    component_text_line_spacing_multiple: 0.9
+    cta_box_pt: [57, 339, 280, 14]
+    footer_box_pt: [45, 360.4, 160, 14.6]
+    validate_after_layout: [canonical_background, safe_zone, text_presence, internal_overflow, visual_integrity]
+
+  workflow_steps:
+    label: herramientas_workflow_cards
+    output_slides: [64]
+    background: canonical_light
+    preserve_content: true
+    layout: two_by_two_cards
+    safe_zone_pt: [45, 31.4, 675, 375]
+    card_geometry_pt: {width: 307.5, height: 86.6, column_lefts: [45, 367.5], row_tops: [114.2, 208.7], row_gap: 7.9}
+    card_style: {fill: FFFFFF, border: 2D5BFF, radius_pt: 6, shadow: null}  # con borde azul nunca lleva sombra (tokens.yaml → white_card)
+    number_pill: {size_pt: 22.9, fill: 2D5BFF, text: FFFFFF, inset_pt: 12}
+    title_style: {font: Montserrat SemiBold, size_pt: 14, color: 2D5BFF}
+    body_style: {font: Montserrat, size_pt: 11, color: 000033}
+    content_left_inset_pt: 40
+    footer_box_pt: [45, 360.4, 160, 14.6]
+    validate_after_layout: [uniform_card_geometry, text_presence, internal_overflow, safe_zone, visual_integrity]
+
+  team_grid:
+    label: equipo_consultoria_con_liderazgo
+    output_slides: [48, 49, 50, 51, 52, 54, 55]
+    background: canonical_light
+    preserve_content: true
+    layout: leadership_plus_team_grid
+    area_title_emphasis_rule:
+      two_words: second_word
+      three_words_with_connector: final_meaningful_word
+      connectors: [y, '&']
+      base_color: 000033
+      emphasis_color: 2D5BFF
+      applies_to: [49, 51, 52, 55, 57, 58]
+    safe_zone_pt: [45, 31.4, 675, 375]
+    per_slide:
+      48:
+        team_panel_pt: [262.5, 131.2, 412.5, 126]
+        team_card_geometry_pt: {width: 125, height: 84, columns: 3, row_tops: [164, 263]}
+        dotted_panel: top_row_only
+      49:
+        team_panel_pt: null
+        team_card_geometry_pt: {width: 200, height: 84, columns: 2, column_lefts: [262.5, 475], row_tops: [164, 253]}
+        dotted_panel: none
+      50:
+        team_panel_pt: null
+        team_card_geometry_pt: {width: 133.5, height: 70, columns: 3, column_lefts: [262.5, 401.5, 540.5], row_tops: [135, 208, 281]}
+        dotted_panel: none
+      51:
+        team_panel_pt: null
+        team_card_geometry_pt: {width: 133.5, height: 70, columns: 3, column_lefts: [262.5, 401.5, 540.5], row_tops: [135, 208, 281]}
+        dotted_panel: none
+      52:
+        team_panel_pt: null
+        team_card_geometry_pt: {width: 133.5, height: 70, columns: 3, column_lefts: [262.5, 401.5, 540.5], row_tops: [135, 208, 281]}
+        dotted_panel: none
+      54:
+        team_panel_pt: null
+        team_card_geometry_pt: {width: 200, height: 70, columns: 2, column_lefts: [262.5, 475], row_tops: [135, 208, 281]}
+        dotted_panel: none
+      55:
+        team_panel_pt: null
+        lead_card_geometry_pt: {left: 45, top: 135, width: 195, height: 60}
+        team_card_geometry_pt: {width: 200, height: 70, columns: 2, column_lefts: [262.5, 475], row_tops: [135, 208, 281]}
+        dotted_panel: none
+    team_card_pattern: [photo_top, name_centered, role_centered]
+    common_card_style: canonical_plain
+    card_shadow: subtle
+    same_card_component_across_output_slides: true
+    internal_spacing_pt: {photo_to_name_min: 3, name_to_role_min: 2}
+    photo_box_pt: [30, 30]
+    name_min_size_pt: 11
+    role_min_size_pt: 11
+    preserve_full_names_and_roles: true
+    validate_after_layout: [photo_name_role_presence, no_overlap, safe_zone, visual_integrity]
+
+  tools_content:
+    label: herramientas_y_formacion
+    output_slides: [66, 67, 68]
+    background: canonical_light
+    preserve_content: true
+    safe_zone_pt: [45, 31.4, 675, 375]
+    shared_header:
+      logo_box_pt: [45, 31.4, 96.7, 19.3]
+      family_label_box_pt: [45, 55.7, 85.5, 13.9]
+      family_rule_pt: [129.8, 62.7, 30, 0.6]
+      title_accent_bar: {shape: roundRect, box_pt: [45, 75.6, 4.5, 25.5], fill: 2D5BFF, radius_pt: 2, line: none, shadow: accent_bar, shared_across_output_slides: true}
+      audit_reference: {slide_id: 68, component: title_accent_bar}
+    shared_footer_box_pt: [45, 360.4, 160, 14.6]
+    card_component:
+      fill: FFFFFF
+      border: 2D5BFF
+      shadow: none
+      min_font_size_pt: 11
+      line_spacing_multiple: 0.8
+      repeated_components_must_be_uniform: true
+    variants:
+      66: certification_with_evidence_image
+      67: pad_with_five_module_cards_in_one_row
+      68: knowledge_sessions_four_plus_two_rows
+    validate_after_layout: [canonical_background, safe_zone, text_presence, internal_overflow, visual_integrity]
+
+  benefits_content:
+    label: beneficios_y_cultura
+    output_slides: [73]
+    background: canonical_light
+    preserve_content: true
+    safe_zone_pt: [45, 31.4, 675, 375]
+    title_box_pt: [45, 119, 630, 30]
+    intro_box_pt: [45, 153, 630, 31.5]
+    card_geometry_pt: {width: 150.8, height: 124, column_lefts: [45, 204.8, 364.5, 524.2], top: 194}
+    card_style: {fill: FFFFFF, border: D9E2FC, shadow: none}
+    card_title_style: {font: Montserrat ExtraBold, size_pt: 13.5, color: 000033}
+    card_body_style: {font: Montserrat, size_pt: 11, color: 000000, line_spacing_multiple: 0.85}
+    card_link_style: {font: Montserrat SemiBold, size_pt: 11.5, color: 2D5BFF, underline: true}
+    validate_after_layout: [canonical_background, safe_zone, text_presence, internal_overflow, visual_integrity, no_orphan_words]
+
+  closing_slide:
+    label: cierre_marca_neo
+    output_slides: [77]
+    background: canonical_light
+    source_reference: "Referencia v2, slide 32, revisión del usuario 2026-09-30"
+    background_layers: [canonical_light_background]
+    layout: canonical_light_farewell
+    preserve_content: false
+    logo_asset: assets/brand/neo-logo-25.png
+    logo_box_pt: [310.51, 149.01, 96.73, 19.27]
+    logo_position: centered
+    footer: canonical_left
+    mandatory_copy: "Logra tus objetivos de negocio utilizando data e inteligencia artificial."
+    text_box_pt: [152.63, 185.12, 414.76, 42]
+    underline_box_pt: [345, 241, 30, 0.6]
+    required_as_last_slide: true
+    append_if_last_slide_contains_operational_content: true
+    validate_after_layout: [canonical_closing, centered_logo, canonical_background, visual_integrity]
+
+  rules_cards:
+    label: reglas_del_juego
+    output_slides: [77]
+    background: canonical_light
+    layout: three_rule_cards
+    preserve_content: true
+    safe_zone_pt: [45, 31.4, 675, 375]
+    title_box_pt: [45, 52, 645, 34]
+    card_geometry_pt: {width: 200, height: 215, column_lefts: [45, 260, 475], top: 107}
+    card_style: {fill: FFFFFF, border: null, shadow: card}  # card blanca: borde azul sin sombra, o sin borde con sombra
+    header_style: {fill: 000033, shape: roundRect_top_rect_bottom, height: 50, bottom_corners: square, long_title_variant: true}
+    header_title_style: {font: Montserrat ExtraBold, size_pt: 13.5, color: FFFFFF, vertical_align: middle}
+    body_style: {font: Montserrat Medium, size_pt: 11.25, color: 000033}
+    icon_policy: {crop_transparent_whitespace: true, preserve_aspect_ratio: true, placement: bottom_left, minimum_visible_size_pt: 18}
+    footer_link: {font: Montserrat Medium, size_pt: 11.25, color: 2D5BFF, underline: true}
+    validate_after_layout: [uniform_card_geometry, internal_overflow, no_orphan_words, safe_zone, visual_integrity]
+
+  # Familias de taller aprobadas por la referencia Taller 1 v7 (2026-09-22,
+  # design_knowledge/references.yaml). `reference_slides` son slides de esa referencia.
+  comparison_matrix:
+    label: tabla_comparativa
+    reference: taller1_v7
+    reference_slides: [7, 8, 14, 15]
+    style: {background: light, header_fill: 000033, body_fill: FFFFFF, border: C5D5F7, border_width_pt: 0.6, radius_pt: 0, shadow: none, gap_pt: 0}
+  worksheet:
+    label: plantilla_para_completar
+    reference: taller1_v7
+    reference_slides: [9, 16]
+    style: {background: light, writing_line: C5D5F7}
+  activity_guide:
+    label: guia_de_dinamica
+    reference: taller1_v7
+    reference_slides: [10, 11, 17, 18, 23, 24]
+    style: {background: light, step_fill: 2D5BFF, aside_fill: 000033, tag_fill: 000033}
+  priority_matrix:
+    label: matriz_de_priorizacion
+    reference: taller1_v7
+    reference_slides: [22]
+    style: {background: light, axis: 000033, focus_fill: 2D5BFF}
+
+  hidden:
+    label: slides_ocultas
+    output_slides: [12, 31]
+    style:
+      preserve_intact: true
+
+rules:
+  navigation_title_uses_family_style: true
+  text_palette_applies_to_preserved_and_hidden_slides: true
+  hyperlinks_use_canonical_blue_without_exceptions: true
+  use_available_safe_space: true
+  safe_zone_is_mandatory_for_all_slides: true
+  safe_zone_audit_required_before_delivery: true
+  visual_integrity_required_before_delivery: true
+  overlap_validation_required_before_delivery: true
+  style_validation_required_inside_safe_zone: true
+  orphan_words_forbidden: true
+  orphan_word_audit_required_after_layout: true
+  orphan_word_rule:
+    applies_to: [titles, labels, body_copy, captions, metric_copy]
+    forbidden_pattern: trailing_single_word_line
+    remediation_order: [increase_text_box_width, rebalance_layout, adjust_font_within_policy, manual_review]
+  repeated_components_must_be_uniform: true
+  uniformity_validation_required: true
+  paired_family_slides_share_geometry_and_style: true
+  content_slides_use_canonical_light_background: true
+  background_exceptions: [section_divider]
+  cover_always_light: true
+  final_slide_always_canonical_light_farewell: true
+  text_cards_fit_content_without_excess_empty_space: true
+  text_cards_equal_width_and_height_per_row: true
+  text_cards_center_body_vertically: true
+  text_cards_center_kicker_title_and_row_in_band: [64, 350]
+  all_tables_use_flat_grid_with_explicit_palette_borders: true
+  table_fill_palette_is_role_specific: true
+  text_color_policy:
+    default_content_text: 000000
+    applies_to: [paragraphs, body_copy, descriptions, captions, notes, explanatory_text]
+    avoid_as_default: [gray, blue]
+    intentional_exceptions: [titles, emphasis, labels, links, metrics, brand_copy, dark_background_text]
+    family_or_component_exceptions_must_be_explicit: true
+    accent_palette_restriction:
+      default_text_color: 000000
+      allowed_navy: 000033
+      canonical_blue: 2D5BFF
+      separator_emphasis_blue: 9AAFFE
+      allowed_non_black_text_colors: [000033, 2D5BFF, 9AAFFE]
+      dark_background_contrast_colors: [FFFFFF, C5D5F7, 7E99FE]
+      dark_mode_purple_accent_only: 9AAFFE
+      dark_mode_purple_emphasis_scope: [section_divider_titles, dark_title_emphasis]
+      # Regla absoluta desde la referencia Taller 1 v7: tokens.yaml → brand_rules.text_colors.
+      brand_rules_text_colors: [000000, FFFFFF, 000033, 2D5BFF, 7E99FE, C5D5F7, 9AAFFE]
+      hyperlink_color: 2D5BFF
+      text_palette_applies_to_preserved_and_hidden_slides: true
+      hyperlink_color_has_no_exceptions: true
+      brand_colors: [2D5BFF, C5D5F7, 000033]
+      disallowed_text_colors: []
+      disallow_unregistered_text_colors: true
+      rationale: "La paleta clara y los demás colores registrados se conservan. En temas oscuros, el único tono morado permitido para énfasis es 9AAFFE; se rechazan otros tonos morados no registrados."
+  team_cards_preserve_photo_name_role_as_one_component: true
+  safe_zone:
+    canvas_pt: [720, 405]
+    working_area_pt: [30, 24, 690, 375]
+    margins_pt: {left: 30, top: 24, right: 30, bottom: 30}
+    applies_to: [visible, hidden]
+    applies_to_elements: [content, brand, editable_images, editable_shapes]
+    full_bleed_allowed_only_for: [backgrounds, explicitly_decorative_layers]
+    overflow_requires_manual_review: true
+  statement_text_line_spacing:
+    multiple: 0.8
+    applies_to: [editorial_statements, multi_line_callouts]
+    reference_slides: [5, 9]
+    excludes: [titles, labels, body_copy, brand_copy]
+  partner_strip:
+    slide_5: label_and_logos
+    label: Ecosistema de Partners
+    allow_text: label_only
+    safe_box_pt: [45, 337, 675, 375]
+  brand_safe_zone:
+    canonical_content_area_pt: [45, 31.4, 675, 375]
+    logo_box_pt: [45, 31.4, 96.7, 19.3]
+    footer_box_pt: [45, 360.4, 160, 14.6]
+  section_dividers_follow_canonical_slide_2: true
+  all_neo_logos_use_canonical_assets: true
+  canonical_logo_assets:
+    light: assets/brand/neo-logo-25.png
+    dark: assets/brand/neo-logo-25-white.png
+  canonical_logo_includes_years: true
+  logo_left_is_default: true
+  logo_right_only_on_collision: true
+  brand_phrase_box_pt: [45, 360.4, 160, 14.6]
+  brand_phrase_light: {font: Montserrat, bold: true, size_pt: 12, color: 2D5BFF}
+  brand_phrase_dark: {font: Montserrat, bold: true, size_pt: 12, color: C5D5F7}
+  brand_exceptions:
+    footer_without_safe_space: [5, 62]
+    logo_shifted_right_for_collision: [15, 17, 31]
+    logo_without_safe_space: [62]
+    centered_brand_lockup: [13, 77]
+  min_working_font_size_pt: 11
+  min_working_font_size_no_exceptions: true
+  overflow_policy:
+    grow_components_inside_safe_zone: true
+    split_dense_four_step_cards: true
+    four_step_split_cards_per_slide: 2
+    four_step_split_preserves_sequence: true
+    current_split: {source_slide: 37, output_slides: [37, 38], cards_per_slide: 2}

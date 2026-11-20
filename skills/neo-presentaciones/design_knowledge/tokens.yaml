@@ -1,0 +1,279 @@
+# Sistema visual inferido de las referencias (SPSA 2026-07, Credenciales 2026).
+# Geometría lógica en pt sobre 720 × 405 (16:9); exportación estándar 1920 × 1080 px.
+version: neo_historical_v2
+
+canvas: {width: 720, height: 405}
+output_canvas: {width_px: 1920, height_px: 1080, dpi: 96, width_pt: 1440, height_pt: 810}
+margins: {left: 45, right: 45, bottom_limit: 350}
+# «Mantén el layout, solo corrige el estilo» (2026-11-02): la composición original entra
+# entera en este marco (bajo el logo, 12 pt sobre el pie, dentro de los márgenes) con una
+# escala uniforme. Ver `shell._fit_frame` y `SlidePlan.keep_layout`.
+keep_layout:
+  zone: [45, 64, 675, 346]
+
+colors:
+  navy: "000033"
+  blue: "2D5BFF"
+  blue_soft: "7E99FE"
+  blue_pale: "C5D5F7"
+  white: "FFFFFF"
+  black: "000000"
+  separator_blue: "9AAFFE"
+
+shadows:
+  subtle: {color: "000000", blur_pt: 4.5, distance_pt: 1.5, alpha_pct: 20}
+  # Sombra de la card blanca sin borde, medida en la referencia Taller 1 v7.
+  card: {color: "000000", blur_pt: 6.75, distance_pt: 2.25, direction_deg: 90, alpha_pct: 7}
+  accent_bar: {color: "000000", blur_pt: 3.0, distance_pt: 1.0, alpha_pct: 14}
+
+# Reglas de marca obligatorias (referencia oficial Taller 1 v7, 2026-09-22).
+# Las audita `audit/brand.py`; ver plans/convenciones.md, "Reglas de marca de Taller 1 v7".
+brand_rules:
+  reference: taller1_v7
+  cover_mode: light
+  closing:
+    required_last_slide: true
+    mode: light
+    text: "Logra tus objetivos de negocio utilizando data e inteligencia artificial."
+    logo_box: [310.51, 149.01, 96.73, 19.27]
+    text_box: [152.63, 185.12, 414.76, 42]
+    text_size: 17
+    underline_box: [345, 241, 30, 0.6]
+    reference: "Referencia v2, slide 32, revisión del usuario 2026-09-30"
+  single_word_separator:
+    companion_required: true
+    component: neo_outline_geometry
+    invent_copy: false
+  table:
+    style: flat_grid
+    header_fill: "000033"
+    body_fill: "FFFFFF"
+    emphasis_fill: "2D5BFF"
+    negative_fill: "C5D5F7"
+    allowed_fills: ["000033", "FFFFFF", "2D5BFF", "C5D5F7"]
+    border_color: "C5D5F7"
+    border_width_pt: 0.6
+    gap_pt: 0
+    radius_pt: 0
+    shadow: null
+    derived_colors_allowed: false
+    reference: "Referencia v2, slides 12, 29 y 31, revisión del usuario 2026-09-30"
+  card_content_fit:
+    padding_pt: 12
+    maximum_extra_height_pt: 28
+    maximum_extra_height_ratio: 0.25
+    equal_height_row_uses_longest_text: true
+    equal_size_tolerance_pt: 1
+    # Feedback de cliente (2026-10-01): el texto de todas las cards empieza a la misma distancia
+    # del borde superior. Centrarlo hacía que cada card arrancara a una altura distinta.
+    center_text_vertically: false
+    # El encabezado no se mueve: se centra solo el contenido en el espacio libre entre el
+    # encabezado (+ header_gap_pt) y el pie de la banda (feedback de cliente, 2026-10-01).
+    center_composition_vertically: false
+    center_content_below_header: true
+    header_gap_pt: 14
+    composition_band: [64, 350]
+    centering_tolerance_pt: 3
+    excludes: [worksheets, image_cards, metric_cards, tables]
+  # Texto: negro, blanco o la paleta NEO. Nada más (sin grises).
+  text_colors: ["000000", "FFFFFF", "000033", "2D5BFF", "7E99FE", "C5D5F7", "9AAFFE"]
+  # Todo texto con hipervínculo usa el azul canónico, aunque navy también sea paleta.
+  hyperlink_color: "2D5BFF"
+  # SVG e íconos editables (formas libres, SVG embebido): misma paleta que el texto.
+  vector_colors: ["000000", "FFFFFF", "000033", "2D5BFF", "7E99FE", "C5D5F7", "9AAFFE"]
+  # Toda card (de cualquier color) usa un radio de la referencia o es pill.
+  card_radius_pt: [3, 5, 6]
+  radius_tolerance_pt: 0.3
+  card_min_side_pt: 18
+  # Card blanca: solo estas dos variantes, como en la referencia.
+  white_card:
+    outlined: {line: "2D5BFF", line_width_pt: 1.5, shadow: null}
+    shadowed: {line: null, shadow: card}
+  # Gráficos nativos (2026-10-01): son los únicos que se trabajan y siguen nativos. Solo
+  # cambia su estilo; los datos no se tocan. Series en este orden (torta y anillo: por punto).
+  chart:
+    light: {text: navy, grid: blue_pale, series: [blue, navy, blue_soft, separator_blue, blue_pale]}
+    dark: {text: white, grid: blue_soft, series: [blue_soft, white, blue_pale, separator_blue, blue]}
+    grid_width_pt: 0.75
+    line_width_pt: 2.25
+
+typography:
+  min_size: 11
+  allowed_families: [Montserrat, Montserrat Medium, Montserrat SemiBold, Montserrat ExtraBold, Montserrat Black]
+  # fuentes de íconos y emoji: exentas de la regla Montserrat
+  exempt_families: [Material Icons, Material Icons Outlined, Material Symbols Outlined, Noto Color Emoji, Segoe UI Emoji]
+  wrap_safety: 0.97   # se valida también con el 97 % del ancho (margen frente al motor de Google)
+  # Citas de fuente («Fuente:», «Fuentes:»): nota chica e igual en todas las slides, en la línea del
+  # pie a la derecha. Exentas del mínimo de 11 pt a pedido de la persona (deck de cliente,
+  # 2026-11-19: a 11 pt «es muy grande y se ve muy raro»). Estilo: `styles.<modo>.citation`.
+  citation:
+    prefixes: ["fuente:", "fuentes:", "source:", "sources:"]
+    size: 8
+
+brand:
+  logo:
+    canonical: true
+    light: assets/brand/neo-logo-25.png
+    dark: assets/brand/neo-logo-25-white.png
+    box: [45, 31.4, 96.7, 19.3]
+    # La izquierda es canónica; x=578.3 solo se usa si el contenido ocupa la caja.
+    right_box: [578.3, 31.4, 96.7, 19.3]
+    centered_box: [311.65, 31.4, 96.7, 19.3]
+    # Con logo del cliente, el bloque NEO | cliente lleva el «NEO» solo (`cobrand.py`).
+    cobrand:
+      light: assets/brand/neo-logo-plain.png
+      dark: assets/brand/neo-logo-plain-white.png
+  phrase:
+    text: neoconsulting.ai
+    # Alineado con la guía inferior del primer slide: 30 pt desde el borde.
+    box: [45, 360.4, 160, 14.6]
+    centered_box: [280, 362.4, 160, 14.6]
+    light: {font: Montserrat, bold: true, size: 12, color: blue}
+    dark: {font: Montserrat, bold: true, size: 12, color: blue_pale}
+  backgrounds:
+    light: assets/brand/bg-light.jpg
+    # Fondo oscuro canónico: slide 4 de Capacitaciones IA NEO 2026 v3 (NEO v2).
+    dark: assets/brand/bg-dark-slide4.png
+  # prefijos md5 de imágenes de logo conocidas
+  known_logos:
+    old: ["7379b7cb", "6ea8df80", "a9bff531", "11117b86", "e8e6f09e",  # "NEO | 20 años" (dos variantes) y "NEO" solo
+          "590c9c36", "8ad1eca6"]  # "NEO" solo navy y blanco (plantilla Google Slides de 2026-11)
+    current: ["033cf20b", "6373e6f2", "fe303385", "1b5a9746"]
+    # 033cf/6373e6f2 son variantes históricas que el parser debe reconocer en entradas;
+    # fe303/1b5a son los assets canónicos navy/blanco que deben usarse al renderizar.
+
+# Estilos de texto por rol. line = interlineado (spcPct / 100).
+styles:
+  light:
+    kicker:    {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
+    title:     {font: Montserrat ExtraBold, size: 21, color: navy, line: 0.95, min: 16,
+                emphasis: {font: Montserrat ExtraBold, italic: true, color: blue}}
+    # Título de la portada clara: la primera palabra en navy y el resto en azul de marca
+    # («Neo Consulting», 2026-10-01; `design_policies.cover_emphasis`).
+    cover_title: {font: Montserrat ExtraBold, size: 45, color: navy, line: 0.95, min: 16,
+                  emphasis: {font: Montserrat ExtraBold, color: blue}}
+    statement: {font: Montserrat Black, size: 27, color: navy, line: 0.9, min: 20,
+                emphasis: {font: Montserrat Black, italic: true, color: blue}}
+    subtitle:  {font: Montserrat Medium, size: 11, color: navy, line: 1.06,
+                emphasis: {font: Montserrat SemiBold, color: navy}}
+    card_number: {font: Montserrat Black, size: 24, color: blue, line: 1.0, min: 18}
+    card_title:  {font: Montserrat ExtraBold, size: 14, color: navy, line: 1.0, min: 12}
+    card_label:  {font: Montserrat SemiBold, size: 11, color: blue, line: 1.05}
+    card_body:   {font: Montserrat, size: 11, color: navy, line: 1.06,
+                  emphasis: {font: Montserrat SemiBold, color: navy}}
+    card_note:   {font: Montserrat, size: 11, italic: true, color: navy, line: 1.06}
+    metric_value: {font: Montserrat Black, size: 30, color: blue, line: 1.0, min: 22}
+    metric_label: {font: Montserrat ExtraBold, size: 13, color: navy, line: 1.0, min: 11}
+    metric_desc:  {font: Montserrat, size: 11, color: navy, line: 1.06}
+    strip_label:  {font: Montserrat SemiBold, size: 11, color: navy, line: 1.0}
+    strip_text:   {font: Montserrat Medium, size: 11, color: navy, line: 1.0}
+    banner:    {font: Montserrat SemiBold, size: 11, color: white, line: 1.06}
+    banner_body: {font: Montserrat, size: 11, color: white, line: 1.06,
+                  emphasis: {font: Montserrat SemiBold, color: white}}
+    note:      {font: Montserrat Medium, size: 11, color: blue, line: 1.0}
+    citation:  {font: Montserrat, size: 8, color: navy, line: 1.0}
+    # Texto corrido fuera de tarjetas (mensaje junto a una imagen): navy, no gris.
+    body:      {font: Montserrat, size: 12, color: navy, line: 1.06, min: 11,
+                emphasis: {font: Montserrat SemiBold, color: blue}}
+    # Cabecera navy de las cards de reglas/procesos (`card_style: header`).
+    card_header_number: {font: Montserrat Black, size: 16, color: blue_pale, line: 1.0, min: 12}
+    card_header_title:  {font: Montserrat ExtraBold, size: 13.5, color: white, line: 1.0, min: 11}
+    card_header_label:  {font: Montserrat SemiBold, size: 11, color: blue_pale, line: 1.05}
+    # Filas compactas de índice / marco (`item_list`).
+    item_number: {font: Montserrat Black, size: 14, color: blue, line: 1.0, min: 12}
+    item_title:  {font: Montserrat ExtraBold, size: 12, color: navy, line: 1.0, min: 11}
+    item_label:  {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
+    # Fichas de equipo: foto, nombre, rol.
+    member_title: {font: Montserrat ExtraBold, size: 12, color: navy, line: 1.0, min: 11}
+    member_label: {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
+    # Círculos de unidades: texto blanco sobre navy o azul.
+    circle_number: {font: Montserrat Black, size: 18, color: blue_pale, line: 1.0, min: 12}
+    circle_title:  {font: Montserrat ExtraBold, size: 14, color: white, line: 1.0, min: 11}
+    circle_label:  {font: Montserrat SemiBold, size: 11, color: blue_pale, line: 1.0}
+    circle_body:   {font: Montserrat, size: 11, color: white, line: 1.06}
+    circle_note:   {font: Montserrat, size: 11, italic: true, color: white, line: 1.06}
+    # Tablas comparativas.
+    matrix_head_label: {font: Montserrat SemiBold, size: 11, color: blue_pale, line: 1.0}
+    matrix_head_title: {font: Montserrat ExtraBold, size: 12, color: white, line: 1.0, min: 11}
+    matrix_label:      {font: Montserrat ExtraBold, size: 11, color: navy, line: 1.0}
+    matrix_label_sub:  {font: Montserrat Medium, size: 11, color: blue, line: 1.0}
+    matrix_cell:       {font: Montserrat, size: 11, color: navy, line: 1.06,
+                        emphasis: {font: Montserrat SemiBold, color: navy}}
+    # Guías de dinámica: rótulo de lista, pasos, paneles y etiquetas de meta.
+    list_title:  {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
+    # Nota corta a la derecha del título (composición libre, Taller 1 v7, slides 13 y 22).
+    title_note:  {font: Montserrat Medium, size: 11, color: navy, line: 1.06, emphasis: {font: Montserrat SemiBold, color: blue}}
+    step_number: {font: Montserrat ExtraBold, size: 11, color: white, line: 1.0}
+    step_body:   {font: Montserrat, size: 11, color: navy, line: 1.06,
+                  emphasis: {font: Montserrat SemiBold, color: navy}}
+    aside_title: {font: Montserrat SemiBold, size: 11, color: blue_pale, line: 1.0}
+    aside_body:  {font: Montserrat, size: 11, color: white, line: 1.06,
+                  emphasis: {font: Montserrat SemiBold, color: white}}
+    tag:         {font: Montserrat SemiBold, size: 11, color: white, line: 1.0}
+    # Matriz de priorización.
+    axis_title:  {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
+    axis_label:  {font: Montserrat Medium, size: 11, color: navy, line: 1.0}
+    quadrant_title: {font: Montserrat ExtraBold, size: 12, color: navy, line: 1.0, min: 11}
+    quadrant_body:  {font: Montserrat, size: 11, color: navy, line: 1.06}
+    quadrant_focus_title: {font: Montserrat ExtraBold, size: 12, color: white, line: 1.0, min: 11}
+    quadrant_focus_body:  {font: Montserrat, size: 11, color: white, line: 1.06}
+    panel_title: {font: Montserrat SemiBold, size: 11, color: white, line: 1.0}
+    panel_prompt: {font: Montserrat SemiBold, size: 11, color: navy, line: 1.06}
+  dark:
+    kicker:    {font: Montserrat SemiBold, size: 12, color: blue_pale, line: 1.0}
+    title:     {font: Montserrat ExtraBold, size: 45, color: white, line: 0.9, min: 32,
+                emphasis: {font: Montserrat Black, italic: true, color: separator_blue}}
+    subtitle:  {font: Montserrat Medium, size: 13, color: blue_pale, line: 1.06}
+    note:      {font: Montserrat Medium, size: 11, color: blue_pale, line: 1.0}
+    citation:  {font: Montserrat, size: 8, color: blue_pale, line: 1.0}
+    # Cierre: texto que acompaña al lockup de marca, centrado bajo el logo.
+    closing_title:    {font: Montserrat ExtraBold, size: 24, color: white, line: 0.95, min: 16}
+    closing_subtitle: {font: Montserrat Medium, size: 12, color: blue_pale, line: 1.06}
+
+# La paleta se asigna por contraste y rol, no por una regla global de texto negro.
+text_context:
+  light_background: {primary: navy, body: navy, emphasis: blue, inverse: white}
+  dark_background: {primary: white, body: white, secondary: blue_pale, emphasis: separator_blue}
+  navy_card: {primary: white, body: white, secondary: blue_pale, emphasis: blue_soft}
+  light_card: {primary: navy, body: navy, emphasis: blue}
+
+components:
+  # Card blanca: solo las dos variantes de `brand_rules.white_card` (borde azul 1.5 pt o sombra).
+  card:        {fill: white, line: blue, line_width: 1.5, radius: 6, padding: 12, gap: 6}
+  metric_card: {fill: white, line: blue, line_width: 1.5, radius: 6, padding: 12, gap: 4}
+  team_card:   {fill: white, line: null, radius: 6, padding: 12, shadow: card}
+  # Aro de las fotos de persona (fichas de equipo, retratos): azul NEO, sin card detrás.
+  photo_ring:  {line: blue, line_width: 2.25}
+  # Ícono de un color (glifo negro, gris o blanco) en una card blanca: se repinta en `glyph` y va
+  # centrado en un círculo `fill`, ocupando `glyph_ratio` de su lado (referencia: Onboarding v2,
+  # «Las reglas del juego»). Sobre la cabecera navy va en `glyph_on_dark`, sin círculo.
+  icon_badge:  {fill: blue_pale, glyph: blue, glyph_on_dark: white, glyph_ratio: 0.6}
+  # Barra de acento junto al título (slide 68 de la referencia: 4,5 × 25,5 pt) y divisor bajo el
+  # encabezado: acentos de marca sin contenido de la composición libre.
+  accent_bar:  {fill: blue, radius: 2, shadow: accent_bar, width: 4.5, height: 25.5, gap: 8}
+  divider:     {line: blue_pale, line_width: 0.75}
+  image_frame: {line: blue, line_width: 0.75, radius: 6, padding: 0.9}
+  image_frame_collage: {line: blue, line_width: 0.75, radius: 6, padding: 0}
+  # Tratamiento de imágenes editoriales: raster derivado con alpha, sin máscara blanca
+  # ni marco vectorial superpuesto en la salida final.
+  image_treatment:
+    standalone: {mode: alpha_raster, line: blue, line_width: 0.75, radius: 6, preserve_full_image: true}
+    collage: {mode: alpha_composite, line: blue, line_width: 0.75, radius: 6, straight_internal_seams: true, single_outer_perimeter: true}
+    applies_to: [photos, people, activities, spaces, events, editorial_illustrations]
+    excludes: [logos, partner_marks, tool_screenshots, stack_assets, decorative_icons]
+  banner:      {fill: blue, radius: 5, padding_x: 14, padding_y: 7}
+  card_header: {fill: navy, radius: 6, padding: 10}
+  item_row:    {fill: white, line: blue, line_width: 1.5, radius: 5, padding: 7, gap: 8, number_width: 26}
+  circle:      {fill: navy, focus_fill: blue, line: null}
+  # Plantillas para completar: renglones suaves donde escribe el participante.
+  worksheet:   {line: blue_pale, line_spacing: 24}
+  # Tablas comparativas: encabezado navy, columna de rótulos suave, celdas con borde.
+  # Como en Taller 1 v7: rótulo blanco con borde azul, celda blanca con sombra.
+  matrix:      {gap: 0, padding: 5, radius: 0, header_fill: navy, label_fill: white, label_line: blue_pale,
+                label_line_width: 0.6, cell_fill: white, cell_shadow: null, label_ratio: 0.24}
+  # Pasos numerados y paneles laterales de las guías de dinámica.
+  step:        {diameter: 20, fill: blue, gap: 10}
+  aside:       {fill: navy, radius: 6, padding: 12, gap: 10}
+  tag:         {fill: navy, radius: 9, padding_x: 10, height: 18, gap: 6}
+  quadrant:    {gap: 4, fill: white, line: blue, line_width: 1.5, focus_fill: blue, radius: 6, padding: 6,
+                axis: navy, axis_width: 1.2}

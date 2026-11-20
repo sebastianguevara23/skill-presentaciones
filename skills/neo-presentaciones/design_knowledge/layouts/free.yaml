@@ -1,0 +1,43 @@
+layout_id: free_01
+semantic_role: free_composition
+mode: light
+reference: "Composición libre (plans/composicion-libre.md): la arma el plan con la gramática v1"
+# Solo a pedido explícito de la persona. Cada bloque reusa el dibujo y la geometría de su layout
+# de origen (card → card_grid, item_row → item_list, step y aside → list_aside) dentro de la región
+# que le toca: no se duplican valores. `item:N` del plan se normaliza a la unidad `card`.
+slots:
+  kicker:     {required: false}
+  title:      {required: true, max_lines: 2}
+  subtitle:   {required: false}
+  tags:       {multiple: true}
+  title_note: {multiple: true}
+  list_title: {required: false}
+  cards:      {count: "1-12", roles: [number, title, label, body, note], attach: [icon]}
+  aside:      {groups: "0-3", attach: [icon]}
+  banner:     {required: false, multiple: true}
+  # Bloques compuestos (F3): cada uno reusa el dibujo de su layout de origen en su celda.
+  # Sus unidades (`quadrant:N`, `row:N`, `circle:N`, `block:N`, `metric:N`) las arma el adaptador.
+  images:      {max: 4}
+  body:        {required: false, multiple: true}
+  header:      {multiple: true}
+  axis_x:      {multiple: true}
+  axis_y:      {multiple: true}
+  panel_title: {required: false}
+  panel:       {multiple: true}
+  notes:      {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  # Rejilla: separación entre celdas de una fila y entre nodos de una pila.
+  cell_gap: 22
+  stack_gap: 12
+  # Tags arriba a la derecha (como list_aside) y nota corta a la derecha del título: el título
+  # cede el ancho de la nota más este aire, y la nota no pasa de esta fracción del ancho.
+  tag_top: 33
+  title_note_gap: 22
+  title_note_max: 0.32

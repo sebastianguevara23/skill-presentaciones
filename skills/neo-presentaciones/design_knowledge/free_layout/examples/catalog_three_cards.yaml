@@ -1,0 +1,14 @@
+# three_cards expresado como composición libre. Debe dar la misma geometría que el layout fijo (F2).
+expresses: {layout: three_cards}
+# Roles de contenido de una slide de ejemplo: el validador exige que cada uno quede en un bloque.
+roles: [kicker, title, subtitle, card:1, card:2, card:3, card:1:icon, banner, note]
+free_layout:
+  mode: light
+  header: {title_style: title}
+  body:
+    stack:
+      - repeat: {unit: card, columns: auto, max: 3}
+        block: {component: card, style: outline, icon: top}
+        height: fill
+      - block: {component: banner, units: [banner]}
+        optional: true

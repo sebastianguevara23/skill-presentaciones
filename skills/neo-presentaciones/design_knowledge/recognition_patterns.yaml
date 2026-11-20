@@ -1,0 +1,15 @@
+# Patrones deterministas deliberadamente estrechos. Una coincidencia solo propone
+# familia; no compone ni aprueba una slide. El resto va al modelo del host.
+version: 1
+patterns:
+  hidden:
+    condition: source slide is hidden
+    family: hidden
+    confidence: high
+  section_divider:
+    condition: texto independiente exacto SECCIÓN o SECCION y ninguna imagen de contenido
+    family: section_divider
+    confidence: high
+    match:
+      exact_text: [SECCIÓN, SECCION]
+      max_content_images: 0

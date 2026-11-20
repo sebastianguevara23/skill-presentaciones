@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "neo-presentaciones",
+  "metadata": {"description": "Skill interna de NEO Consulting para rediseñar y crear presentaciones con la marca NEO."},
+  "owner": {"name": "NEO Consulting"},
+  "plugins": [
+    {
+      "name": "neo-presentaciones",
+      "description": "Rediseña o crea presentaciones con la línea gráfica de NEO, con el motor de composición, revisión visual y verificación del contenido.",
+      "version": "0.1.0",
+      "author": {"name": "NEO Consulting"},
+      "source": "./",
+      "category": "design",
+      "tags": ["presentaciones", "pptx", "google-slides", "marca", "design"]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+ "title": "Adopción de IA en el área comercial",
+ "subtitle": "Propuesta para el comité 2027",
+ "request": "hazme una presentación corta para el comité sobre cómo adoptar IA en el área comercial",
+ "slides": [
+  {
+   "family": "section_divider",
+   "title": "Dónde estamos",
+   "subtitle": "Diagnóstico del área comercial"
+  },
+  {
+   "family": "three_cards",
+   "title": "Tres pilares de la adopción",
+   "units": [
+    {
+     "number": "01",
+     "title": "Datos",
+     "body": "Unificar el CRM y limpiar la base de clientes."
+    },
+    {
+     "number": "02",
+     "title": "Herramientas",
+     "body": "Asistentes para propuestas y seguimiento."
+    },
+    {
+     "number": "03",
+     "title": "Personas",
+     "body": "Formación por rol y acompañamiento semanal."
+    }
+   ]
+  },
+  {
+   "family": "workflow_steps",
+   "title": "Plan en cuatro pasos",
+   "units": [
+    {
+     "number": "1",
+     "title": "Piloto",
+     "body": "Un equipo, ocho semanas."
+    },
+    {
+     "number": "2",
+     "title": "Medición",
+     "body": "Tiempo por propuesta y tasa de cierre."
+    },
+    {
+     "number": "3",
+     "title": "Ajuste",
+     "body": "Corregir procesos y prompts."
+    },
+    {
+     "number": "4",
+     "title": "Escalamiento",
+     "body": "Todo el área en el segundo semestre."
+    }
+   ]
+  },
+  {
+   "family": "image_text_clients",
+   "title": "Lo que ya funciona",
+   "body": "Los equipos piloto redujeron a la mitad el tiempo de armado de propuestas.",
+   "images": 1
+  },
+  {
+   "family": "team_grid",
+   "title": "Equipo responsable",
+   "units": [
+    {
+     "title": "Ana Pérez",
+     "label": "Líder comercial"
+    },
+    {
+     "title": "Luis Gómez",
+     "label": "Datos"
+    },
+    {
+     "title": "María Ruiz",
+     "label": "Formación"
+    }
+   ]
+  }
+ ]
+}

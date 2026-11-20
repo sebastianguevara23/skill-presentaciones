@@ -1,0 +1,23 @@
+layout_id: matrix_01
+semantic_role: comparison_table
+mode: light
+reference: "Tablas comparativas y plantillas de filas: rótulo por fila, columnas con encabezado"
+# Cada fila es una unidad (`row:N`) con sus celdas en cajas libres, leídas de izquierda a
+# derecha. Las proporciones de columna salen del origen; el estilo, de tokens.matrix.
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  header:   {multiple: true}
+  rows:     {count: "1-8", free: true}
+  banner:   {required: false, multiple: true}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 10
+  banner_gap: 10

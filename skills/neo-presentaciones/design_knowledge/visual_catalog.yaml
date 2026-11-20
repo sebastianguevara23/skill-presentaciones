@@ -1,0 +1,194 @@
+# Índice versionado de reglas; los valores y geometrías siguen en tokens.yaml y
+# slide_families.yaml.  Los IDs/números de slide de referencias permanecen como
+# fixtures en el segundo archivo, nunca como condición de selección.
+catalog_version: 11
+visual_contract:
+  version: neo_historical_v2
+  hash_algorithm: sha256
+  hash: d96db05643b04dd01567e2a41dbbb760998876f658a4985f0b410461e018d6a5
+  sources: [tokens.yaml, slide_families.yaml]
+  migration_note: incrementar catalog_version y recalcular hash al aprobar una nueva versión visual
+common_auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit, content_integrity]
+# `composition` es la composición por defecto de la familia: el host elige la familia y
+# el motor sabe con qué layout de `design_knowledge/layouts/` componerla. `columns` y
+# `card_style` son variantes registradas de ese layout; `composition_layout` en el plan
+# puede sustituirla por otra composición registrada.
+# `splittable: false` marca las familias singulares (portada, separador, cierre): no
+# tienen unidades repetidas que repartir. El resto se parte por condición —capacidad de
+# la composición o desborde—, nunca por el deck del que salió el caso.
+families:
+  title_slide:
+    composition: {layout: section}   # la portada reutiliza el layout `section` en modo claro
+    splittable: false   # portada: pieza única de marca
+    selection_conditions: portada del deck (primera slide) en modo claro canónico
+    allowed_variants: []
+    token_refs: [backgrounds.light, styles.light, brand.logo]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.title_slide]
+  table_of_contents:
+    # `rows`: filas sin card (número azul, texto, flecha) separadas por una línea fina.
+    composition: {layout: item_list, variants: {rows: {card_style: rule}}}
+    selection_conditions: navegación o índice con secciones y estado activo
+    allowed_variants: [all_cards_navy_reference, active_card_state, rows]
+    token_refs: [styles.light, components.card, brand.logo, brand.phrase]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.table_of_contents]
+  agenda_list:
+    composition: {layout: image_text}
+    splittable: false
+    selection_conditions: título Agenda con puntos ordenados y una ilustración editorial opcional
+    allowed_variants: [illustration_secondary_right]
+    token_refs: [styles.light, components.card, components.image_treatment, brand.logo, brand.phrase]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.agenda_list]
+  section_divider:
+    composition: {layout: section}
+    splittable: false   # separador: una sola idea por slide
+    selection_conditions: separador narrativo con título y opcionalmente subtítulo
+    allowed_variants: [title_emphasis_by_title_shape]
+    token_refs: [backgrounds.dark, styles.dark, brand.logo, brand.phrase]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.section_divider]
+  image_text_clients:
+    composition: {layout: image_text}
+    selection_conditions: imagen editorial dominante con mensaje superpuesto o adyacente
+    allowed_variants: [footer_right_when_left_lower_area_is_occupied]
+    token_refs: [components.image_treatment, brand.logo, brand.phrase]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.image_text_clients]
+  image_heavy_special:
+    composition: {layout: image_text}
+    selection_conditions: composición editorial de varias imágenes con texto o iconos asociados
+    allowed_variants: [collage, selective_repositioning_with_manifest_exception]
+    token_refs: [components.image_treatment, typography.min_size]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.image_heavy_special]
+  timeline:
+    composition: {layout: card_grid, columns: 3}
+    selection_conditions: secuencia cronológica de hitos o transformaciones
+    allowed_variants: [natural_title_wrap, documented_explicit_title_break]
+    token_refs: [components.card, styles.light]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.timeline]
+  ai_maturity_levels:
+    composition: {layout: three_cards}
+    selection_conditions: explicación de niveles que requiere continuidad en slides consecutivas
+    allowed_variants: [split_with_single_intro_owner, compact_followup_component]
+    token_refs: [styles.light, components.card]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.ai_maturity_levels]
+  three_cards:
+    composition: {layout: three_cards}
+    selection_conditions: tres bloques conceptuales paralelos con título e introducción
+    allowed_variants: [full_width_intro, example_height_expansion]
+    token_refs: [components.card, styles.light]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.three_cards]
+  three_unit_overview:
+    composition: {layout: circles}
+    selection_conditions: tres unidades o procesos presentados como grupo de círculos
+    allowed_variants: [center_focus, right_focus]
+    token_refs: [colors.navy, colors.blue, styles.light]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.three_unit_overview]
+  paired_process:
+    composition: {layout: card_grid, columns: 2, card_style: header}
+    selection_conditions: dos procesos o responsabilidades comparables en cards emparejadas
+    allowed_variants: [lifted_v2, own_content_only_followup]
+    token_refs: [components.card, colors.navy, typography.min_size]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.paired_process]
+  adr_framework:
+    composition: {layout: item_list}
+    selection_conditions: marco de componentes en dos columnas y varias filas
+    allowed_variants: []
+    token_refs: [components.card, styles.light, typography.min_size]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.adr_framework]
+  workflow_steps:
+    # `template`: plantilla de propuesta con placeholders; las cards reservan alto (sin renglones).
+    composition: {layout: card_grid, columns: 2, variants: {template: {min_fill: 0.75}}}
+    selection_conditions: pasos de workflow distribuidos en cards numeradas
+    allowed_variants: [two_by_two_cards, template]
+    token_refs: [components.card, shadows.subtle, styles.light]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.workflow_steps]
+  team_grid:
+    composition: {layout: team_grid}
+    selection_conditions: liderazgo y equipo representados por fichas foto-nombre-rol
+    allowed_variants: [leadership_panel, two_or_three_columns, documented_card_count]
+    token_refs: [components.team_card, shadows.subtle, components.image_treatment]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.team_grid]
+  tools_content:
+    composition: {layout: card_grid, variants: {five_module_row: {columns: 5}, four_plus_two_rows: {columns: 4}}}
+    selection_conditions: herramientas, certificaciones o formación con cabecera compartida
+    allowed_variants: [certification_with_evidence_image, five_module_row, four_plus_two_rows]
+    token_refs: [components.card, components.accent_bar, shadows.accent_bar]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.tools_content]
+  benefits_content:
+    composition: {layout: card_grid, columns: 4, variants: {template: {min_fill: 0.75}}}
+    selection_conditions: beneficios o cultura con introducción y cards de enlace
+    allowed_variants: [four_card_row, template]
+    token_refs: [components.card, styles.light]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.benefits_content]
+  closing_slide:
+    composition: {layout: closing}
+    splittable: false   # cierre: pieza única de marca
+    selection_conditions: cierre de marca sin contenido operativo que redistribuir
+    allowed_variants: [canonical_light_farewell]
+    token_refs: [backgrounds.light, brand.logo, brand_rules.closing]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.closing_slide]
+  rules_cards:
+    composition: {layout: card_grid, columns: 3, card_style: header}
+    selection_conditions: reglas o principios en tres cards con header navy de dos capas
+    allowed_variants: [long_title_header]
+    token_refs: [components.card, colors.navy, shadows.subtle]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit]
+    source_cases: [slide_families.yaml#families.rules_cards]
+  # Familias de taller propuestas el 2026-09-21 y aprobadas el 2026-09-22 con la
+  # referencia oficial Taller 1 v7 (design_knowledge/references.yaml).
+  comparison_matrix:
+    composition: {layout: matrix}
+    status: approved
+    selection_conditions: comparación en tabla con filas rotuladas y columnas con encabezado
+    allowed_variants: []
+    token_refs: [components.matrix, colors.navy, styles.light]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.comparison_matrix, references.yaml#taller1_v7]
+  worksheet:
+    composition: {layout: card_grid, columns: 2, card_style: header, fill: true,
+                  variants: {rows: {layout: matrix, fill: true}}}
+    status: approved
+    selection_conditions: plantilla para completar en sesión, con cajas o filas vacías para escribir
+    allowed_variants: [rows]
+    token_refs: [components.card_header, components.worksheet, components.matrix]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.worksheet, references.yaml#taller1_v7]
+  activity_guide:
+    composition: {layout: list_aside}
+    status: approved
+    selection_conditions: instrucciones de una dinámica o conversatorio con pasos y paneles de apoyo
+    allowed_variants: []
+    token_refs: [components.step, components.aside, components.tag]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.activity_guide, references.yaml#taller1_v7]
+  priority_matrix:
+    composition: {layout: quadrant, focus: 2}
+    splittable: false   # los cuatro cuadrantes son una sola lectura
+    status: approved
+    selection_conditions: matriz 2×2 con ejes rotulados y, opcionalmente, un panel para sustentar
+    allowed_variants: []
+    token_refs: [components.quadrant, components.card_header, components.worksheet]
+    auditors: [geometry_audit, render_audit, visual_quality_audit, style_integrity_audit, content_integrity]
+    source_cases: [slide_families.yaml#families.priority_matrix, references.yaml#taller1_v7]
+  hidden:
+    splittable: false   # oculta: se conserva intacta, no se compone
+    selection_conditions: slide con visibilidad oculta en el manifiesto de origen
+    allowed_variants: [preserve_intact]
+    token_refs: []
+    auditors: [content_integrity, geometry_audit]
+    source_cases: [slide_families.yaml#families.hidden]

@@ -1,0 +1,14 @@
+expresses: {layout: card_grid}
+# Roles de contenido de una slide de ejemplo: el validador exige que cada uno quede en un bloque.
+roles: [title, card:1, card:2, card:3, card:4, card:5, banner]
+free_layout:
+  mode: light
+  header: {title_style: title}
+  body:
+    stack:
+      # columns: auto usa la tabla de card_grid (2→2, 3→3, 4→2, 5→3, 6→3); todas del mismo alto.
+      - repeat: {unit: card, columns: auto, max: 6, uniform: true}
+        block: {component: card, style: outline, icon: auto}
+        height: fill
+      - block: {component: banner, units: [banner]}
+        optional: true

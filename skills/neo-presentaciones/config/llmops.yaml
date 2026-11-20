@@ -1,0 +1,28 @@
+# Límites iniciales del piloto local. Se revisan contra el baseline saneado de
+# plans/llmops-baseline.md, no contra la cuota personal de ningún host.
+version: 1
+basis:
+  visual_contract_version: neo_historical_v2
+  baseline: plans/llmops-baseline.md
+  review_trigger: cambio de corpus, host, preview codec o versión visual
+model_context:
+  max_visible_bytes_per_tool: 24000
+  max_slides_per_batch: 6
+  max_previews_per_batch: 6
+  preview_width_px: 1024
+  max_preview_jpeg_bytes: 350000
+  # Abrir una slide del original a tamaño completo (gráficos, texto pequeño, slides ambiguas).
+  full_preview_width_px: 1600
+  max_full_preview_jpeg_bytes: 900000
+workflow:
+  # Sin tope de intercambios (2026-10-02): un rediseño que avanza no se pausa. Solo se detiene
+  # ante un bucle: tantos start_redesign seguidos sin un candidato nuevo.
+  # 3 (2026-10-12): con 5, Haiku repitió el mismo bloqueo 4 veces y abrió otro trabajo para salir.
+  max_consecutive_failed_applies: 3
+  max_llm_repair_rounds: 6
+  history_days: 30   # cuánto se lista un trabajo de la persona para retomarlo o iterar
+  max_deterministic_repair_rounds: 3
+  behavior_when_exceeded: blocked_reusable_job
+privacy:
+  never_send: [pptx_binary, complete_source_manifest, complete_audit_report, all_previews]
+  telemetry_only: [host_version, visible_bytes, preview_count, preview_resolution, retries, duration, state, blocked_reason]

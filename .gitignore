@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.neo/
+.venv/
+dist/
+*.pptx
+!ejemplos/deck-de-prueba.pptx
+!skills/neo-presentaciones/assets/prueba-render.pptx
+* - NEO/
+*:Zone.Identifier

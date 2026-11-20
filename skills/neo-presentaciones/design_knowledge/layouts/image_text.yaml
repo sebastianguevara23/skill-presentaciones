@@ -1,0 +1,63 @@
+layout_id: image_text_01
+semantic_role: editorial_image
+mode: light
+reference: "Familias image_text_clients e image_heavy_special: imagen completa y mensaje adyacente"
+# Las imágenes se muestran completas y proporcionales (nunca se deforman ni se recortan
+# más de lo que ya venían recortadas). El mensaje ocupa la columna derecha.
+slots:
+  kicker:   {required: false}
+  title:    {required: false, max_lines: 2}
+  subtitle: {required: false}
+  images:   {max: 4}
+  body:     {required: false, multiple: true}
+  # Bloques con orden explícito (`block:N`, una o varias cajas) y su imagen opcional
+  # (`block:N:image`). Se usan cuando el orden visual del origen es ambiguo (columnas)
+  # y permiten partir la slide por bloque: la imagen viaja con el suyo.
+  blocks:   {count: "0-6", free: true, attach: [image]}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  top_without_header: 64
+  # El texto es el protagonista: la imagen toma como máximo el 40 % del ancho
+  # (revisión de un deck interno, 2026-09-23: «las imágenes o GIF son grandes»).
+  image_ratio: 0.4
+  # si el mensaje no cabe a 11 pt, la imagen cede ancho en estos pasos antes del desborde
+  image_ratio_fallbacks: [0.35, 0.3]
+  column_gap: 22
+  image_gap: 8
+  paragraph_gap: 8
+  block_gap: 4          # entre las cajas de un mismo bloque
+  card_gap: 10          # entre tarjetas de la galería
+  # El mensaje va sobre el fondo, sin card, con una barra azul de acento a la izquierda
+  # (`accent_width`; el texto arranca a `accent_inset`), centrado en alto con las
+  # imágenes; el cuerpo crece hasta `body_max` si cabe. `message_card: true` vuelve a la
+  # tarjeta blanca (`team_card`). Un bloque que empieza con su número lo lleva en un
+  # margen de `number_gutter` a la izquierda del texto.
+  message_card: false
+  accent_width: 3
+  accent_inset: 14
+  body_max: 16
+  caption_max_chars: 40     # bloque de un rótulo breve con imagen → rótulo encima de la imagen
+  card_compact_ratio: 0.2   # mensaje < 20 % del alto de la imagen → tarjeta a su medida
+  number_gutter: 30
+  # Galería: bloques sin ninguna imagen (p. ej. una parte de una partición) → tarjetas
+  # de texto lado a lado.
+  gallery_columns: {1: 1, 2: 2, 3: 3, 4: 2, 5: 3, 6: 3}
+  gallery_image_min: 50
+  # Fichas con foto: cada bloque lleva su foto (`block:N:image`). Las fotos comparten el
+  # alto (completas, como máximo `photo_card_max`) y van arriba del texto o, si así se ven
+  # más grandes, a su izquierda tomando `photo_side_ratio` del ancho interior de la ficha.
+  photo_card_max: 120
+  photo_side_ratio: 0.45
+  # Imagen principal + retrato: si una imagen ocupa en el origen 4 veces o más que cada
+  # una de las otras (un gráfico junto a la foto de quien lo presenta), la principal se
+  # queda la columna de imagen y las menores acompañan al texto.
+  primary_ratio: 4
+  text_column_min: 170
+  side_image_max: 90

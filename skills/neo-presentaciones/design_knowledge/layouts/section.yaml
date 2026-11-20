@@ -1,0 +1,24 @@
+layout_id: section_01
+semantic_role: section_divider
+mode: dark
+reference: "SPSA slides 4, 6, 8, 12 (SECCIÓN 0X)"
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  title_top_one_line: 170
+  title_top_two_lines: 140
+  title_height: 48
+  kicker_gap: 12
+  subtitle_top_one_line: 232
+  subtitle_gap: 14
+typography:
+  title: {font: Montserrat Black, size_pt: 36}
+  # Título de portada o separador que ocupa dos líneas o más (salto del autor o corte):
+  # interlineado 0.8 (spcPct 80000). En una línea sigue el `line` de styles.dark.title.
+  multiline_line: 0.8
+  subtitle: {font: Montserrat Medium, size_pt: 11}

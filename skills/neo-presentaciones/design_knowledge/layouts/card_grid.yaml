@@ -1,0 +1,29 @@
+layout_id: card_grid_01
+semantic_role: repeated_cards
+mode: light
+reference: "Familias timeline, workflow_steps, tools_content, benefits_content, rules_cards, paired_process"
+# Rejilla uniforme de tarjetas: todas del mismo alto (componente repetido = uniforme).
+# Las columnas salen de la cantidad de tarjetas o de `composition.columns` de la familia.
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  cards:    {count: "2-6", roles: [number, title, label, body, note], attach: [icon]}
+  banner:   {required: false, multiple: true}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  card_gutter: 15
+  row_gap: 10
+  icon_size: 26
+  # Ícono dentro de la cabecera navy (composición libre, `icon: header_right`).
+  header_icon_size: 20
+  icon_left_min_width: 240
+  banner_gap: 12
+  columns_by_count: {2: 2, 3: 3, 4: 2, 5: 3, 6: 3}

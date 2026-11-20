@@ -1,0 +1,16 @@
+[
+ {"slide": 1, "family": "title_slide", "roles": {"s1:t1": "title", "s1:t2": "subtitle"}},
+ {"slide": 2, "family": "table_of_contents",
+  "roles": {"s2:t1": "title", "s2:t2": "item:1", "s2:t3": "item:2", "s2:t4": "item:3", "s2:t5": "item:4", "s2:t6": "item:5"},
+  "paragraph_roles": {"s2:t2": ["number", "title"], "s2:t3": ["number", "title"], "s2:t4": ["number", "title"],
+                      "s2:t5": ["number", "title"], "s2:t6": ["number", "title"]}},
+ {"slide": 3, "family": "three_cards",
+  "roles": {"s3:t1": "title", "s3:t2": "card:1", "s3:t3": "card:2", "s3:t4": "card:3"},
+  "paragraph_roles": {"s3:t2": ["title", "body"], "s3:t3": ["title", "body"], "s3:t4": ["title", "body"]}},
+ {"slide": 4, "family": "benefits_content", "composition_layout": "metrics_row",
+  "roles": {"s4:t1": "title", "s4:t2": "metric:1:value", "s4:t3": "metric:1:label", "s4:t4": "metric:2:value",
+            "s4:t5": "metric:2:label", "s4:t6": "metric:3:value", "s4:t7": "metric:3:label"}},
+ {"slide": 5, "family": "image_text_clients", "roles": {"s5:t1": "title", "s5:t2": "body", "s5:i1": "image:1"},
+  "asset_classes": {"s5:i1": "illustration"}},
+ {"slide": 6, "family": "closing_slide", "roles": {"s6:t1": "title"}}
+]

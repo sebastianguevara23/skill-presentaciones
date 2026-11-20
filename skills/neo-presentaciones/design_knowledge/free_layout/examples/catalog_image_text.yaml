@@ -1,0 +1,13 @@
+expresses: {layout: image_text}
+# Roles de contenido de una slide de ejemplo: el validador exige que cada uno quede en un bloque.
+roles: [title, image:1, image:2, body]
+# El comportamiento adaptativo de image_text (la imagen cede ancho si el texto no cabe, imagen
+# principal + retrato, galería sin imágenes) no se reescribe con celdas: es un bloque compuesto.
+free_layout:
+  mode: light
+  header: {title_style: title}
+  body:
+    block:
+      component: image_message
+      units: [image, body, block]
+      params: {image_ratio: 0.4, image_ratio_fallbacks: [0.35, 0.3], message: accent_bar}

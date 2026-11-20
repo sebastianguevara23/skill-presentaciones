@@ -1,0 +1,25 @@
+layout_id: metrics_row_01
+semantic_role: key_metrics
+mode: light
+reference: "Credenciales slide 7; SPSA slide 39"
+slots:
+  kicker:   {required: false}
+  title:    {required: true, style: statement, max_lines: 3}
+  subtitle: {required: false}
+  notes:    {required: false}
+  metrics:  {count: "2-5", parts: [value, label, description]}
+  strip:    {required: false, plan: false, description: "fila de logos / partners con etiqueta (solo ruta heredada)"}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 8
+  body_gap: 20
+  metric_gutter: 14
+  # Composición libre: ancho mínimo de una card de cifra antes de pasar a otra fila.
+  metric_min_width: 110
+  strip_gap: 16
+  strip_item_height: 22
+  strip_item_gap: 12

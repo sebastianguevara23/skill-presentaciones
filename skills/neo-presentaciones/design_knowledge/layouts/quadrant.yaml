@@ -1,0 +1,28 @@
+layout_id: quadrant_01
+semantic_role: priority_matrix
+mode: light
+reference: "Matriz 2×2 con ejes rotulados y panel de trabajo opcional"
+# Los cuadrantes se numeran por posición: 1 arriba-izquierda, 2 arriba-derecha,
+# 3 abajo-izquierda, 4 abajo-derecha. El destacado lo fija la familia (`focus`).
+slots:
+  kicker:      {required: false}
+  title:       {required: true, max_lines: 2}
+  subtitle:    {required: false}
+  axis_y:      {multiple: true}
+  axis_x:      {multiple: true}
+  quadrants:   {count: 4, free: true}
+  panel_title: {required: false}
+  panel:       {multiple: true}
+  notes:       {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  footer_air: 2   # el auditor de marca pide 12 pt entre contenido y footer (360.4)
+  body_gap: 14
+  plot_ratio: 0.56
+  column_gap: 24
+  axis_gap: 6

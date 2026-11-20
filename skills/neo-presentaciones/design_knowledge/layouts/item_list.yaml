@@ -1,0 +1,31 @@
+layout_id: item_list_01
+semantic_role: compact_items
+mode: light
+reference: "Familias table_of_contents y adr_framework: filas compactas en una o dos columnas"
+# Filas de un solo componente; se llenan por columna (la mitad a la izquierda, el resto a
+# la derecha) para que la lectura siga el orden de origen. Hasta 5 van en una columna; con
+# más, dos columnas de hasta 6 filas (una agenda de 12 puntos). Si las filas no caben, el
+# compositor lo reporta y la slide se parte.
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  items:    {count: "2-12", roles: [number, title, label, body, note]}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  column_gutter: 15
+  row_gap: 6
+  max_rows: 5
+  # variante `rule` (card_style): fila sin card, línea fina de paleta debajo y flecha azul
+  # de punta abierta, de un solo trazo. La misma línea cierra el encabezado a todo el ancho.
+  # Las líneas son trazos (conectores), no rectángulos: así todas salen del mismo grosor.
+  rule_color: blue_pale
+  rule_width: 0.75
+  arrow_width: 12

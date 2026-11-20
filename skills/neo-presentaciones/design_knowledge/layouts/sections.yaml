@@ -1,0 +1,28 @@
+layout_id: sections_01
+semantic_role: grouped_paragraphs
+mode: light
+reference: "Aportes o alcances por parte: rótulo como etiqueta y cada subtítulo con su texto en una card breve"
+# Una sección es una unidad de texto: su rótulo (`label`) va como etiqueta navy, un párrafo
+# introductorio (`note`) debajo, y cada `title` abre una card con los párrafos que lo siguen.
+# Las cards se reparten en dos columnas. Sirve cuando un solo cuadro del origen trae varios
+# subtemas: se evita la card enorme con un único rótulo al costado.
+slots:
+  kicker:   {required: false}
+  title:    {required: true, max_lines: 2}
+  subtitle: {required: false}
+  sections: {count: "1-2", roles: [label, note, title, body, number]}
+  notes:    {required: false}
+geometry:
+  x: 45
+  width: 630
+  kicker_top: 67
+  title_top_with_kicker: 85.7
+  title_top: 70
+  subtitle_gap: 6
+  body_gap: 14
+  tag_gap: 8
+  lead_gap: 8
+  columns: 2
+  column_gap: 14
+  row_gap: 10
+  section_gap: 16
