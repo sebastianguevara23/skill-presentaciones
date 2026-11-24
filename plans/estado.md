@@ -57,10 +57,10 @@ completa: 14 controles de punta a punta más 138 en `tools/pruebas/`, en verde (
    matrices.
 5. `rules_cards` y `timeline` con 4 cards salen 3+1 en el motor: corregir el layout para
    que no haga falta `rejilla`.
-6. **Títulos que no entran en 2 líneas a 42:** desde la 0.2.0 no se achican, así que la
-   slide no cabe y sale con la marca sobre su organización original. Hay que decidir si en
-   ese caso extremo se vuelve a achicar con aviso. También falta decidir si el estilo
-   `statement` (título de `metrics_row`, 54 y se achica) sigue la misma regla.
+6. **Estilo `statement`** (título de `metrics_row`, 54 y se achica): falta decidir si sigue
+   la regla de los títulos de slide. Los títulos de slide que no entran en dos líneas a 42 se
+   achican con aviso desde el 2026-11-24 (`title_shrunk`, `titulo_achicado`); antes la slide
+   salía con la marca sobre su organización original.
 7. **Bugs que ya estaban** (los encontraron las pruebas de la 0.2.0):
    - en una slide que conserva su organización, una tabla nativa cuyo marco va como
      `decorative` se borra entera;

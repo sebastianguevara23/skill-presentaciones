@@ -61,7 +61,7 @@ por cómo está dibujado:
 
 ### Títulos que no entran en una línea
 
-Los títulos de slide van a 42 pt y no se achican. Si un título no entra en una línea
+Los títulos de slide van a 42 pt. Si un título no entra en una línea
 (`cabe_como_titulo: false` en `lectura.json`), suma a la tabla de decisiones una columna
 «título corto propuesto»:
 
@@ -70,6 +70,9 @@ Los títulos de slide van a 42 pt y no se achican. Si un título no entra en una
   «último trimestre» pasa a «Q4»: eso es un dato nuevo y la persona tiene que confirmarlo.
 - Pide la aprobación de todos los títulos de una vez. Aplica solo los aprobados, con
   `text_overrides` en el plan. Los que no apruebe van en dos líneas a 42.
+- Si un título no entra ni en dos líneas, el motor lo achica para no sacar la slide de su
+  familia, y `revisar` lo marca con `titulo_achicado`. No lo entregues así sin haberle
+  propuesto el título corto a la persona.
 
 ### Preparar la estructura antes de asignar
 

@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.2.1 — sin publicar
+
+- **Títulos que no entran en dos líneas:** el motor vuelve a achicarlos (hasta 32 pt en el
+  archivo final) en vez de sacar la slide de su familia, con el aviso `title_shrunk` y el
+  hallazgo `titulo_achicado` en `revisar`. Los de una o dos líneas siguen a 42.
+
 ## 0.2.0 — 2026-11-24
 
 Mejoras que salen de un deck de cliente que necesitó 6 rondas de corrección (plan en

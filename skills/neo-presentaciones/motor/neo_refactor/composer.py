@@ -472,7 +472,11 @@ class Composer:
                     break
             else:
                 issues.append(f"emphasis_not_found:{phrase!r}")
-        paras, w, _, fit_issues = fit_heading(paras, st, width, max_lines, self.safety)
+        paras, w, size, fit_issues = fit_heading(paras, st, width, max_lines, self.safety)
+        if role == "title" and size < st.size:
+            # Solo pasa cuando el título no entra en `max_lines` a su tamaño: se avisa para
+            # proponer un título corto (D3).
+            fit_issues = [*fit_issues, f"title_shrunk:{size:g}"]
         return paras, w, issues + fit_issues
 
     def author_emphasis(self, paragraphs: list[Paragraph]) -> str | None:

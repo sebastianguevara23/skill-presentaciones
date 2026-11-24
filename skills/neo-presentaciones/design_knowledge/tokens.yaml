@@ -152,9 +152,11 @@ brand:
 styles:
   light:
     kicker:    {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
-    # Título de slide (D3, 2026-11-23): 21 pt fijos (42 en el archivo final), nunca se achica
-    # (`min` = `size`). Si no entra en dos líneas queda el aviso `heading_too_long`.
-    title:     {font: Montserrat ExtraBold, size: 21, color: navy, line: 0.95, min: 21,
+    # Título de slide (D3, 2026-11-24): 21 pt (42 en el archivo final) en una o dos líneas; nunca
+    # se achica para entrar en una. Solo si no entra en dos líneas baja hasta `min`, con el aviso
+    # `title_shrunk` (y `titulo_achicado` en `revisar`), para no sacar la slide de su familia.
+    # El arreglo de fondo es un título corto aprobado (`text_overrides`).
+    title:     {font: Montserrat ExtraBold, size: 21, color: navy, line: 0.95, min: 16,
                 emphasis: {font: Montserrat ExtraBold, italic: true, color: blue}}
     # Título de la portada clara: la primera palabra en navy y el resto en azul de marca
     # («Neo Consulting», 2026-10-01; `design_policies.cover_emphasis`).

@@ -8,7 +8,9 @@ revisa con `neo.py`, y comprueba los bytes del resultado:
 - la slide `keep_layout` sin `a:highlight` y con `ea`/`cs`/`sym` iguales a `latin`;
 - el separador de dos palabras con la primera en blanco y el resto en `blue_pale`, sin
   itálica, con su línea azul y sin el patrón geométrico (y el de una palabra, todo en blanco);
-- todos los títulos de slide a 42 pt en el archivo final;
+- todos los títulos de slide de una o dos líneas a 42 pt en el archivo final; uno que no entra
+  en dos líneas se achica (entre 32 y 42) con `title_shrunk` y `titulo_achicado`, y la slide
+  sigue con su familia;
 - `titulo_dos_lineas` en `revisar` y `cabe_como_titulo` en `leer` donde corresponde;
 - `ajustes.flecha_escuadra`: forma libre ortogonal con punta, a la separación pedida.
 
@@ -412,6 +414,52 @@ def comprobar_flecha(tmp: Path) -> None:
     comprobar(len(reabierta.slides[0].shapes) == 3, "flecha_escuadra: el archivo se guarda y se vuelve a abrir")
 
 
+# Mide unos 1400 pt en una línea a 21 lógicos: tres líneas a 21 y dos a 17.
+TITULO_EXTREMO = ("Tres frentes de trabajo para transformar la operación comercial, la atención a los "
+                  "clientes y la gestión de datos en todo el país")
+
+
+def comprobar_titulo_extremo(tmp: Path) -> None:
+    """D3: un título que no entra en dos líneas a 42 se achica con aviso y la slide sigue en su familia."""
+    t = tmp / "extremo"
+    t.mkdir()
+    prs = Presentation()
+    prs.slide_width, prs.slide_height = Emu(960 * PT), Emu(540 * PT)
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _caja(s, 60, 190, 840, 70, ["Informe de prueba"], 40, True)
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    _caja(s, 40, 30, 880, 90, [TITULO_EXTREMO], 30, True)
+    for k, (titulo, cuerpo) in enumerate([("Clientes", "Canales unificados."), ("Procesos", "Menos papel."),
+                                          ("Personas", "Equipos formados.")]):
+        _caja(s, 40 + k * 300, 160, 280, 200, [titulo, cuerpo], 18)
+    prs.save(str(t / "deck.pptx"))
+    plan = [{"slide": 1, "family": "title_slide", "roles": {"s1:t1": "title"}},
+            {"slide": 2, "family": "three_cards",
+             "roles": {"s2:t1": "title", "s2:t2": "card:1", "s2:t3": "card:2", "s2:t4": "card:3"},
+             "paragraph_roles": {f"s2:t{k}": ["title", "body"] for k in (2, 3, 4)}}]
+    (t / "plan.json").write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+    red = neo("redisenar", "deck.pptx", "--plan", "plan.json", "--out", "v1.pptx", cwd=t)
+    if not (t / "v1.pptx").exists():
+        return
+    salida = Presentation(str(t / "v1.pptx"))
+    k, s = next(((k, s) for k, s in enumerate(salida.slides, 1)
+                 if any(sh.name.startswith("title_") and "Tres frentes" in sh.text_frame.text for sh in s.shapes)),
+                (None, None))
+    comprobar(s is not None and marcador(s).get("mode") == "redesign" and not red.get("no_cupieron"),
+              "título extremo: la slide sigue con su familia (no sale con la marca sobre el original)")
+    if s is None:
+        return
+    titulo = next(sh for sh in s.shapes if sh.name.startswith("title_"))
+    tams = {r.font.size.pt for p in titulo.text_frame.paragraphs for r in p.runs if r.text.strip()}
+    comprobar(tams and all(32 <= v < 42 for v in tams), f"título extremo: se achica entre 32 y 42 pt ({tams})")
+    reporte = json.loads((t / "v1_report.json").read_text(encoding="utf-8"))
+    avisos = [i.get("detail") or "" for sl in reporte.get("slides", []) if sl["slide"] == 2 for i in sl.get("issues", [])]
+    comprobar(any(a.startswith("title_shrunk") for a in avisos), f"título extremo: aviso title_shrunk ({avisos})")
+    rev = neo("revisar", "v1.pptx", cwd=t)
+    achicados = {h["slide"] for h in rev.get("hallazgos", []) if h["codigo"] == "titulo_achicado"}
+    comprobar(achicados == {k}, f"revisar: titulo_achicado solo en la slide del título extremo ({achicados})")
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory(prefix="neo-marca-") as tmp:
         t = Path(tmp)
@@ -437,6 +485,7 @@ def main() -> None:
             ver = neo("verificar", "deck.pptx", "v1.pptx", cwd=t)
             comprobar(ver.get("ok") is True, f"verificar: el contenido sigue completo ({ver.get('slides')})")
         comprobar_flecha(t)
+        comprobar_titulo_extremo(t)
 
     if fallas:
         print("\n" + "\n\n".join(fallas))

@@ -36,7 +36,7 @@ kicker), ExtraBold (títulos), Black (cifras y números de card).
 
 | Rol | Letra | Tamaño |
 |---|---|---|
-| Título de slide | ExtraBold, navy; énfasis en blue | 21 pt (42), **fijo** |
+| Título de slide | ExtraBold, navy; énfasis en blue | 21 pt (42) en una o dos líneas |
 | Título de portada | ExtraBold, énfasis en blue | 45 pt (90) |
 | Título en separador oscuro | ExtraBold, sin itálica: la primera palabra en blanco y el resto en blue_pale | 45 pt (90), en una línea; baja hasta 32 (64) para entrar |
 | Subtítulo | Medium, navy | 11 pt (22) |
@@ -49,10 +49,12 @@ kicker), ExtraBold (títulos), Black (cifras y números de card).
 
 - **Mínimo: 11 pt (22 pt en el archivo final).** Solo las citas de fuente bajan a 8 pt. Si
   no entra, se parte la slide; no se achica la letra salvo que la persona lo pida.
-- **Los títulos de slide no se achican** y van en una línea. Si un título no entra, se
-  propone una versión corta y se aplica solo con el sí de la persona
-  ([redisenar.md](redisenar.md), paso 2). Si no la aprueba, va en dos líneas a 21 (42).
-  `revisar` lo marca (`titulo_dos_lineas`).
+- **Los títulos de slide van en una línea a 21 (42).** Si un título no entra, se propone una
+  versión corta y se aplica solo con el sí de la persona ([redisenar.md](redisenar.md),
+  paso 2). Si no la aprueba, va en dos líneas a 21 (42). Solo si no entra ni en dos líneas el
+  motor lo achica, hasta 16 (32), para que la slide conserve su diseño. Es un caso de
+  emergencia: `revisar` lo marca con `titulo_achicado` (y el de dos líneas con
+  `titulo_dos_lineas`), y hay que proponer el título corto.
 - **Viñetas:** Arial «•» en blue, al 100 % del tamaño del texto. Las listas numeradas, con su
   número en blue. El motor las normaliza también en las slides que conservan su organización.
 - Alto de línea: 1.2 × el tamaño (como Google Slides). Los textos de una card empiezan a la

@@ -54,7 +54,7 @@ Trabaja en la carpeta de la persona: crea al lado del deck una carpeta `<nombre>
 | `crear GUION --out vN.pptx [--medir]` | Deck nuevo desde un guion aprobado |
 | `mirar PPTX --out DIR [--antes DECK] [--slides 3,5]` | PNG por slide, cuadrículas y antes/después |
 | `formas PPTX --slide N` | Formas de una slide con posición en pt, letra y colores |
-| `revisar PPTX` | Hallazgos de calidad y marca, con medida (también `titulo_dos_lineas`). Informa, no bloquea |
+| `revisar PPTX` | Hallazgos de calidad y marca, con medida (también `titulo_dos_lineas` y `titulo_achicado`). Informa, no bloquea |
 | `verificar ORIGINAL CANDIDATO [--reporte R]` | Contenido completo y visible |
 | `entregar ORIGINAL CANDIDATO --out FINAL [--reporte R]` | Verifica, optimiza y deja el informe |
 

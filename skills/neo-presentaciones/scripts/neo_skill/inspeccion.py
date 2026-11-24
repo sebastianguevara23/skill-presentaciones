@@ -210,8 +210,9 @@ def _fondo_bajo(caja, planas, z_texto, W, H) -> str:
 
 
 # ---------------------------------------------------------------- títulos de una línea
-# D3 (2026-11-23): el título de slide va a 21 pt lógicos fijos (42 en el archivo final) y no
-# se achica. Un título que no entra en una línea se avisa a tiempo para proponer uno corto:
+# D3 (2026-11-24): el título de slide va a 21 pt lógicos (42 en el archivo final) en una o dos
+# líneas; solo si no entra en dos el motor lo achica (`titulo_achicado`). Un título que no
+# entra en una línea se avisa a tiempo para proponer uno corto:
 # en `leer` (antes de la primera pasada) y en `revisar` (`titulo_dos_lineas`). Se mide con
 # `textmetrics`, la misma medida del composer, y con su margen de seguridad (`wrap_safety`).
 
@@ -401,6 +402,14 @@ def revisar(pptx: Path, slides: list[int] | None = None) -> dict:
                         {"necesario_pt": round(necesario), "caja_pt": round(alto)})
                 if clara and nombre.startswith("title_") and (largo := _titulo_dos_lineas(slide, shape, caja, escala, kn)):
                     add(n, "titulo_dos_lineas", nombre, largo["detalle"], largo["medida"])
+                if clara and nombre.startswith("title_"):
+                    # El motor solo achica un título que no entra en dos líneas: se propone uno corto.
+                    oficial = kn.tokens["styles"]["light"]["title"]["size"] * escala
+                    tams = [r.font.size.pt for p in tf.paragraphs for r in p.runs if r.text.strip() and r.font.size]
+                    if tams and max(tams) < oficial - 0.5:
+                        add(n, "titulo_achicado", nombre,
+                            f"el título bajó a {max(tams):g} pt porque no entra en dos líneas a {oficial:g} pt: "
+                            "propón un título corto", {"tamano_pt": max(tams), "oficial_pt": oficial})
                 if not nombre.startswith(BRAND_PREFIX):
                     textos.append((z, shape, caja))
                     fondo = _fondo_bajo(caja, planas, z, W, H)
