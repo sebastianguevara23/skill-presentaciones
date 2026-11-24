@@ -1,7 +1,7 @@
 {
   "name": "neo-presentaciones",
   "description": "Presentaciones con la línea gráfica de NEO: rediseña un PPTX o un Google Slides con la marca sin tocar el contenido, o crea un deck o una plantilla desde un pedido. Claude diseña con el motor de NEO, mira cada slide, corrige con código y verifica el contenido antes de entregar.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {"name": "NEO Consulting"},
   "skills": "./skills/"
 }

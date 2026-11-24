@@ -7,7 +7,7 @@
     {
       "name": "neo-presentaciones",
       "description": "Rediseña o crea presentaciones con la línea gráfica de NEO, con el motor de composición, revisión visual y verificación del contenido.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {"name": "NEO Consulting"},
       "source": "./",
       "category": "design",

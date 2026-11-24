@@ -1,6 +1,6 @@
 # Estado
 
-Última actualización: 2026-11-23.
+Última actualización: 2026-11-24.
 
 ## Por qué existe
 
@@ -24,6 +24,18 @@ Esta skill lleva ese segundo modo a cualquier persona de NEO. El MCP queda conge
 - **Repo público** (2026-11-23): los comentarios del motor nombran las referencias de marca
   sin clientes (Taller 1 v7, Referencia v2) y los decks de casos como «deck de cliente» o
   «deck interno».
+- **Marca 0.2.0** (2026-11-23, feedback de un deck de cliente):
+  - El separador lleva la palabra de acento en blue_pale y la línea corta, sin el patrón
+    geométrico.
+  - Los títulos de slide no se achican.
+  - Las capturas pierden el fondo blanco en las slides claras.
+  - Tablas, matrices y el bloque imagen + texto se centran en alto; las cifras siguen pegadas
+    al título.
+
+## Versión 0.2.0
+
+Lo que cambió está en `CHANGELOG.md` y el porqué en `plans/mejoras-0.2.0.md`. Prueba
+completa: 14 controles de punta a punta más 138 en `tools/pruebas/`, en verde (Linux/WSL).
 
 ## Versión 0.1.0
 
@@ -45,3 +57,19 @@ Esta skill lleva ese segundo modo a cualquier persona de NEO. El MCP queda conge
    matrices.
 5. `rules_cards` y `timeline` con 4 cards salen 3+1 en el motor: corregir el layout para
    que no haga falta `rejilla`.
+6. **Títulos que no entran en 2 líneas a 42:** desde la 0.2.0 no se achican, así que la
+   slide no cabe y sale con la marca sobre su organización original. Hay que decidir si en
+   ese caso extremo se vuelve a achicar con aviso. También falta decidir si el estilo
+   `statement` (título de `metrics_row`, 54 y se achica) sigue la misma regla.
+7. **Bugs que ya estaban** (los encontraron las pruebas de la 0.2.0):
+   - en una slide que conserva su organización, una tabla nativa cuyo marco va como
+     `decorative` se borra entera;
+   - `entregar` vuelve a optimizar sin las clases de imagen y las capturas pierden los
+     300 ppi;
+   - «18 %» se parte entre líneas porque no hay espacio duro.
+8. **Viñetas heredadas del layout o del master:** no se normalizan; solo las escritas en la
+   slide, que es como exporta Google Slides.
+9. **Galería:** falta una imagen del modo imagen protagonista y otra de la matriz con
+   columna destacada.
+10. **Volver a correr el deck de cliente** que originó la 0.2.0 y compararlo con la versión
+    aprobada.

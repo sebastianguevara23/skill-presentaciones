@@ -61,14 +61,14 @@ skills/neo-presentaciones/
   design_knowledge/     tokens de marca, catálogo de familias y layouts
   assets/               Montserrat, logos y fondos de marca, galería de familias
 ejemplos/               deck de prueba, su plan y un guion de ejemplo
-tools/                  prueba de humo, galería y deck de prueba
+tools/                  prueba de humo, pruebas por tema (pruebas/), galería y deck de prueba
 plans/estado.md         dónde quedó el trabajo
 ```
 
 ## Mantenimiento
 
 ```bash
-python3 tools/probar.py                                    # prueba de punta a punta (14 controles)
+python3 tools/probar.py                                    # punta a punta (14) + tools/pruebas/ (138); --rapido salta las segundas
 uv run --with pillow==12.3.0 python tools/generar-galeria.py   # regenera assets/galeria/
 uv run --with python-pptx==1.0.2 --with pillow==12.3.0 python tools/crear-deck-de-prueba.py
 ```

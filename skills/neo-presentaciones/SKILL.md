@@ -47,14 +47,14 @@ Trabaja en la carpeta de la persona: crea al lado del deck una carpeta `<nombre>
 | Comando | Para qué |
 |---|---|
 | `preparar` | Deja el equipo listo (una vez) |
-| `leer DECK --out DIR` | Texto e ids por slide (`lectura.json`) y cuadrículas del original |
+| `leer DECK --out DIR` | Texto e ids por slide (`lectura.json`), imágenes de la plantilla (logo del cliente) y cuadrículas del original |
 | `catalogo [--familia F]` | Familias, layouts, slots y roles que el motor sabe componer |
 | `separar DECK --slide N --forma F [--numeros] --out P` | Una lista en una sola caja pasa a una caja por ítem (mismo texto) |
-| `redisenar DECK --plan P --out vN.pptx` | Primera pasada del motor con tu plan |
+| `redisenar DECK --plan P --out vN.pptx [--logo-cliente RUTA]` | Primera pasada del motor con tu plan |
 | `crear GUION --out vN.pptx [--medir]` | Deck nuevo desde un guion aprobado |
 | `mirar PPTX --out DIR [--antes DECK] [--slides 3,5]` | PNG por slide, cuadrículas y antes/después |
 | `formas PPTX --slide N` | Formas de una slide con posición en pt, letra y colores |
-| `revisar PPTX` | Hallazgos de calidad y marca, con medida. Informa, no bloquea |
+| `revisar PPTX` | Hallazgos de calidad y marca, con medida (también `titulo_dos_lineas`). Informa, no bloquea |
 | `verificar ORIGINAL CANDIDATO [--reporte R]` | Contenido completo y visible |
 | `entregar ORIGINAL CANDIDATO --out FINAL [--reporte R]` | Verifica, optimiza y deja el informe |
 
@@ -86,16 +86,24 @@ Los dos caminos usan el mismo bucle:
   slide», «letra más chica para que entre». Hazlo con el plan o con código. No respondas
   «no se puede». Si algo choca con la marca, ofrece lo más cercano dentro de ella.
 - Pregunta solo si el alcance de verdad no se entiende, y una sola vez.
+- **Un pedido que puede caer en varios elementos parecidos** («acorta la línea», «el palito
+  más grueso», «ese recuadro») se confirma antes de tocar todo el deck. Muéstrale una
+  miniatura con los candidatos marcados y pregúntale cuál es. Los nombres de las barras y
+  líneas están en [marca.md](references/marca.md).
 - Si una slide no queda bien después de dos intentos, dilo y propón la alternativa
   (partirla, otra familia o conservar su organización), en vez de entregarla en silencio.
+- Lo que la persona pide para un deck (centrado, títulos cortos, tonos para destacar) vale
+  para todas las slides que se parezcan, no solo para la de la captura que mandó.
 
 ## Al entregar
 
 Dale a la persona:
 - La ruta del PPTX final y lo que cambió, en pocas líneas.
-- Las salvedades del informe que valga la pena revisar.
+- Las salvedades del informe que valga la pena revisar, y los cambios de texto que aprobó
+  (`textos_aprobados` y `rotulos_consolidados` del informe de entrega).
 - Las imágenes que falte poner (los recuadros «Colocar imagen»).
-- Cómo llevarlo a Google Slides ([google.md](references/google.md)).
+- Cómo llevarlo a Google Slides ([google.md](references/google.md)). Recuérdale que lo abra
+  con Presentaciones de Google: la vista previa de Drive no carga Montserrat.
 
 Si el contenido cambió a pedido suyo, di qué cambió.
 

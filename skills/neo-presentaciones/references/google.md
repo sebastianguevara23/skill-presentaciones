@@ -30,7 +30,27 @@ a que se sincronice y sigue desde el paso 2.
 Si en la configuración de Drive está activo «Convertir archivos subidos al formato de
 editor de Documentos de Google», el paso 3 no hace falta.
 
+### Subirlo tú, con el conector de Google Drive
+
+Si la sesión tiene las herramientas de Google Drive, puedes subir y convertir el PPTX tú
+mismo. Pide permiso antes: subir un archivo es publicarlo en su Drive. `create_file` acepta
+el archivo por referencia (`base64Content: "sha256:<hash>:<ruta>"`), así que un deck de unos
+MB entra sin pasar el contenido por la conversación, y lo deja como presentación de Google.
+
+**Cada ronda genera un enlace nuevo.** El conector no puede reemplazar el contenido de una
+presentación que ya existe. Díselo a la persona en la primera subida, y en cada ronda sigue
+estos pasos:
+
+1. Sube la versión nueva y dale el enlace.
+2. Renombra la anterior agregándole «(versión anterior)».
+3. Mándala a la papelera solo cuando la persona diga que sí.
+
 ## Revisar en Google
+
+**Ábrelo con Presentaciones de Google, no con la vista previa de Drive.** La vista previa
+(la que muestra «Página N / M» abajo) no carga Montserrat y dibuja otra letra, así que parece
+un error de fuente que no existe. Avísalo cuando entregues el enlace, y si la persona manda
+capturas, pídelas desde Presentaciones de Google.
 
 Google corta las líneas un poco distinto que LibreOffice. Después de convertir, pide a la
 persona que mire las slides con mucho texto o con textos justos de ancho. Si un título salta
