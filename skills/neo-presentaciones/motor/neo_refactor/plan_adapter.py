@@ -535,7 +535,21 @@ def renderability_issues(
     return [
         issue
         for source_slide in manifest.slides
-        for issue in _issues_for_slide(by_id[source_slide.id], manifest, knowledge)
+        for issue in [*_issues_for_slide(by_id[source_slide.id], manifest, knowledge),
+                      *_text_override_issues(by_id[source_slide.id], manifest)]
+    ]
+
+
+def _text_override_issues(slide: SlidePlan, manifest: SourceManifest) -> list[PlanValidationIssue]:
+    """Un texto aprobado (`text_overrides`) reemplaza un texto que la slide tiene."""
+    texts = {element.id for element in manifest.slide(slide.source_slide_id).elements if element.kind == "text"}
+    return [
+        PlanValidationIssue(
+            source_slide_id=slide.source_slide_id, code="text_override_unknown_element",
+            detail=f"text_overrides apunta a {element_id}, que no es un texto de esta slide "
+                   f"(los ids salen de `neo.py leer`).",
+        )
+        for element_id in slide.text_overrides if element_id not in texts
     ]
 
 
@@ -601,9 +615,23 @@ def to_legacy_classification(
                  and by_id[a.element_id].kind == "image" and by_id[a.element_id].source_shape_id is not None]
         if logos:
             shell_brand[index] = logos
+    # Textos aprobados de las slides que no se recomponen: el motor los reemplaza en el PPTX.
+    shell_text_overrides = {
+        _source_index(slide.source_slide_id): _local_overrides(slide, manifest)
+        for slide in plan.slides
+        if slide.text_overrides and (not slide.selected_for_redesign or slide.keep_layout)
+    }
     return DeckClassification(source=manifest.source_deck_id, slides=classifications,
                               shell_decorative=shell_decorative, asset_classes=asset_classes,
-                              keep_layout=keep_layout, shell_brand=shell_brand)
+                              keep_layout=keep_layout, shell_brand=shell_brand,
+                              shell_text_overrides=shell_text_overrides)
+
+
+def _local_overrides(slide: SlidePlan, manifest: SourceManifest) -> dict:
+    """`text_overrides` del plan (`s3:t1`) con el id local de la slide (`t1`)."""
+    local_ids = {element.id: element.local_id for element in manifest.slide(slide.source_slide_id).elements}
+    return {local_ids[element_id]: override for element_id, override in slide.text_overrides.items()
+            if element_id in local_ids}
 
 
 # Unidades de los bloques compuestos de la composición libre (además de `card`).
@@ -739,6 +767,8 @@ def _classify_part(
         "family": slide.family,
         "layout": slots.layout,
         "variant": slide.archetype,
+        "highlight_column": slide.highlight_column,
+        "image_background": slide.image_background,
         "kicker": optional("kicker"),
         "title": optional("title"),
         "subtitle": optional("subtitle"),
@@ -761,6 +791,10 @@ def _classify_part(
         **variants,
         "font_floor": font_floor(slide, knowledge),
         "style_overrides": list(slide.style_overrides),
+        # Cada parte de una partición lleva los de toda la slide: el motor los aplica una vez.
+        "text_overrides": {local_ids[element_id]: override for element_id, override in slide.text_overrides.items()
+                           if element_id in local_ids},
+        "consolidate_labels": slide.consolidate_labels,
         "free_layout": slide.free_layout,
         "borrowed": borrowed,
     }

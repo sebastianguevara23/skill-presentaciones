@@ -9,7 +9,7 @@ from .core import Finding
 from .geometry import elements, is_background
 from .render import _rpara
 
-SUBCHECKS = ("bookends", "table_style", "shape_palette", "separator_companion", "card_content_fit")
+SUBCHECKS = ("bookends", "table_style", "shape_palette", "card_content_fit")
 
 
 def card_rows(ctx, slide):
@@ -153,11 +153,8 @@ def findings(ctx, auditor):
                     if color and color != "gradient" and color not in allowed:
                         add(info.index,"shape_palette","off_palette_shape",shape.name,
                             "forma o celda con color no registrado",{"color":color},"usar un token exacto sin tint/lumMod")
-        if info.family == "section_divider" and not is_light(slide):   # la portada clara no es un separador
-            titles = [s.text.strip() for s in slide.shapes if s.has_text_frame and s.name.startswith("title_")]
-            if titles and len(titles[0].split()) == 1 and not any(s.name.startswith("separator_companion") for s in slide.shapes):
-                add(info.index,"separator_companion","single_word_separator_empty","title",
-                        "separador de una palabra sin componente visual adicional",{},"añadir neo_outline_geometry; no inventar subtítulos")
+        # El separador de una palabra ya no exige el patrón geométrico (D1, 2026-11-23): todo
+        # separador oscuro lleva la línea azul bajo el título (`components.separator_line`).
         fit = rules["card_content_fit"]
         if info.redesigned and info.layout == "free" and fit.get("center_content_below_header"):
             # Composición libre: se centra el cuerpo entero (filas, paneles y banda), no una fila,

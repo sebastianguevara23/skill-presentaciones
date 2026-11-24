@@ -13,7 +13,16 @@ texto ni geometría de contenido:
 - card blanca → borde azul 1.5 pt sin sombra si tenía borde, o sin borde con la sombra
   `card` si no lo tenía;
 - relleno o borde de forma fuera de paleta → blanco si es claro (una card gris es una card
-  blanca) o el color de paleta más cercano.
+  blanca) o el color de paleta más cercano;
+- viñetas que ya trae la slide → la de marca (`brand_rules.bullet`: «•» Arial, azul, 100 %);
+  una numeración (`buAutoNum`) conserva su tipo y toma el mismo color y tamaño;
+- runs, `endParaRPr`, `defRPr` y celdas de tabla → sin `a:highlight` (la «caja gris» de los
+  rótulos de un deck de cliente) y con `ea`/`cs`/`sym` en la letra de `latin`.
+
+Se llama desde `engine.py` para cada slide que sale como brand shell: las que conservan su
+organización a pedido (`keep_layout`), las que no cupieron en su layout (`no_cupieron`), las que
+no tienen layout compatible y las de gráfico nativo. Las rediseñadas las dibuja el renderer, que
+ya escribe la viñeta de marca y solo `latin`, sin resaltado.
 """
 from __future__ import annotations
 
@@ -24,7 +33,7 @@ from pptx.oxml.ns import qn
 
 from .audit import brand as audit_brand
 from .knowledge import Knowledge, nearest_color as nearest
-from .renderer import BRAND_PREFIX
+from .renderer import BRAND_PREFIX, BULLET_TAGS, bullet_nodes, place_bullet
 
 EMU = 12700
 
@@ -215,14 +224,76 @@ def _cards(slide, colors, rules, kn: Knowledge, scale: float) -> dict[str, int]:
     return stats
 
 
+_PARA_PROPS = tuple(qn(t) for t in ("a:pPr", *(f"a:lvl{k}pPr" for k in range(1, 10))))
+_MARKERS = tuple(qn(f"a:{t}") for t in ("buChar", "buAutoNum", "buBlip"))
+
+
+def _bullets(slide, kn: Knowledge) -> int:
+    """Viñetas que ya trae la slide conservada → la de marca, en el orden del esquema.
+
+    Se quitan `buSzPts`, `buSzTx`, `buClrTx` y los `buClr`/`buFont` del original. Una marca
+    («●», «○», «■», una imagen) pasa a «•» en Arial; una numeración conserva su tipo y su
+    `startAt`. Un párrafo que solo da color o tamaño a una viñeta heredada del layout recibe
+    el color y el tamaño de marca y conserva lo demás. `buNone` (sin viñeta) no se toca.
+    """
+    spec = kn.tokens["brand_rules"]["bullet"]
+    color = kn.color(spec["color"])
+    changed = 0
+    for ppr in slide.shapes._spTree.iter(*_PARA_PROPS):
+        if ppr.find(qn("a:buNone")) is not None or not any(child.tag in BULLET_TAGS for child in ppr):
+            continue
+        auto = ppr.find(qn("a:buAutoNum"))
+        if auto is not None:
+            nodes = bullet_nodes(ppr, auto.get("type"), auto.get("startAt"), color)
+        elif any(ppr.find(tag) is not None for tag in _MARKERS):
+            nodes = bullet_nodes(ppr, color=color)
+        else:
+            kept = [child for child in ppr if child.tag in (qn("a:buFontTx"), qn("a:buFont"))]
+            nodes = [*bullet_nodes(ppr, color=color, marker=False), *kept]
+        before = [etree.tostring(child) for child in ppr if child.tag in BULLET_TAGS]
+        place_bullet(ppr, nodes)
+        if [etree.tostring(child) for child in ppr if child.tag in BULLET_TAGS] != before:
+            changed += 1
+    return changed
+
+
+_RUN_PROPS = tuple(qn(t) for t in ("a:rPr", "a:endParaRPr", "a:defRPr"))
+
+
+def _clean_runs(slide) -> dict[str, int]:
+    """Sin `a:highlight` y con `ea`/`cs`/`sym` en la letra de `latin`, en runs, finales de
+    párrafo, estilos de lista y tablas. El shell pasa `latin` a Montserrat y deja las otras
+    tres en la letra del original (Arial, Calibri…): un visor que las usa dibuja otra letra."""
+    stats = {"highlight_removed": 0, "fonts_matched": 0}
+    for rpr in slide.shapes._spTree.iter(*_RUN_PROPS):
+        for mark in rpr.findall(qn("a:highlight")):
+            rpr.remove(mark)
+            stats["highlight_removed"] += 1
+        latin = rpr.find(qn("a:latin"))
+        face = latin.get("typeface") if latin is not None else None
+        if not face:
+            continue
+        for tag in ("a:ea", "a:cs", "a:sym"):
+            node = rpr.find(qn(tag))
+            if node is not None and node.get("typeface") != face:
+                node.set("typeface", face)
+                for attr in ("panose", "pitchFamily", "charset"):
+                    node.attrib.pop(attr, None)
+                stats["fonts_matched"] += 1
+    return stats
+
+
 def apply_brand_rules(slide, kn: Knowledge, scale: float = 1.0) -> dict[str, int]:
-    """Corrige en sitio paleta de texto, vínculos, radios y cards blancas; devuelve el conteo."""
+    """Corrige en sitio paleta de texto, vínculos, radios, cards blancas, viñetas y runs;
+    devuelve el conteo."""
     rules = kn.tokens["brand_rules"]
     colors = audit_brand._Colors(slide)
     stats = {"text_colors": _text_colors(slide, colors, rules)}
     # Antes que las cards: una card gris que pasa a blanca recibe ahí su variante de marca.
     stats["shape_colors"] = _shape_palette(slide, colors, kn)
     stats.update(_cards(slide, colors, rules, kn, scale))
+    stats["bullets"] = _bullets(slide, kn)
+    stats.update(_clean_runs(slide))
     return {key: value for key, value in stats.items() if value}
 
 

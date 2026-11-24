@@ -4,6 +4,8 @@ mode: dark
 reference: "SPSA slides 4, 6, 8, 12 (SECCIÓN 0X)"
 slots:
   kicker:   {required: false}
+  # Separador oscuro: una línea (de 45 a 32 pt); si no entra, dos líneas con el issue
+  # `separator_title_two_lines`. La portada clara admite dos líneas.
   title:    {required: true, max_lines: 2}
   subtitle: {required: false}
   notes:    {required: false}
@@ -14,10 +16,16 @@ geometry:
   title_top_two_lines: 140
   title_height: 48
   kicker_gap: 12
-  subtitle_top_one_line: 232
+  # Separador con título de una línea a 45: la línea azul queda en y = 234.6 y el subtítulo,
+  # `subtitle_gap` debajo de ella. La portada clara no lleva línea: su subtítulo va bajo el título.
+  subtitle_top_one_line: 252.6
   subtitle_gap: 14
 typography:
-  title: {font: Montserrat Black, size_pt: 36}
+  # Un solo estilo (D1, 2026-11-23): el de `tokens.yaml` → styles.dark.title, que es el que usa
+  # el composer. Primera palabra en blanco, el resto en blue_pale; sin itálica.
+  title: {font: Montserrat ExtraBold, size_pt: 45, min_pt: 32, color: white, emphasis_color: blue_pale}
+  # Línea azul bajo el título: `tokens.yaml` → components.separator_line (125 × 4, 14 bajo el título).
+  separator_line: separator_line
   # Título de portada o separador que ocupa dos líneas o más (salto del autor o corte):
   # interlineado 0.8 (spcPct 80000). En una línea sigue el `line` de styles.dark.title.
   multiline_line: 0.8

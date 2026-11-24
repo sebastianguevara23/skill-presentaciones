@@ -21,3 +21,8 @@ geometry:
   subtitle_gap: 6
   body_gap: 10
   banner_gap: 10
+  # La tabla (con su banner) se centra en vertical entre el encabezado y el pie (D4, 0.2.0).
+  # Si hay alto, las filas crecen hasta `row_target` (35 lógicos, 70 en el archivo final);
+  # si no, se quedan con su alto natural. Una plantilla para completar (`fill`) ya llena el alto.
+  center_block: true
+  row_target: 35

@@ -155,6 +155,8 @@ def cmd_leer(args) -> None:
                     "caja_pt": [round(e.box.x, 1), round(e.box.y, 1), round(e.box.w, 1), round(e.box.h, 1)]}
             if e.paragraphs:
                 item["parrafos"] = e.paragraphs
+                from neo_skill.inspeccion import medida_titulo  # ¿cabe como título en una línea? (3.1)
+                item.update(medida_titulo(e.paragraphs))
             elif e.text:
                 item["texto"] = e.text
             if e.chart is not None:
@@ -175,6 +177,10 @@ def cmd_leer(args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     lectura = {"deck": str(deck), "lienzo_pt": [manifest.width, manifest.height], "slides_total": len(manifest.slides),
                "ocultas": [s.index for s in manifest.slides if not s.visible], "slides": slides}
+    # Imágenes de layouts y masters: el logo del cliente puede estar solo en la plantilla.
+    from neo_skill import plantilla
+    lectura["plantilla"] = {"imagenes": plantilla.imagenes(deck, out)}
+    candidatas = [i["archivo"] for i in lectura["plantilla"]["imagenes"] if i["candidata_client_logo"]]
     (out / "lectura.json").write_text(json.dumps(lectura, ensure_ascii=False, indent=1), encoding="utf-8")
     imagenes, hojas = [], []
     if not args.sin_imagenes:
@@ -182,7 +188,8 @@ def cmd_leer(args) -> None:
         hojas = vista.cuadriculas(imagenes, out / "original", titulo="Slide")
     _salida({"lectura": str(out / "lectura.json"), "slides": len(slides), "ocultas": lectura["ocultas"],
              "cuadriculas": [str(h) for h in hojas], "imagenes": str(out / "original") if imagenes else None,
-             "grupos_repetidos": sorted({f["grupo"] for f in slides if "grupo" in f})})
+             "grupos_repetidos": sorted({f["grupo"] for f in slides if "grupo" in f}),
+             "logo_cliente_en_plantilla": candidatas})
 
 
 def cmd_catalogo(args) -> None:
@@ -221,6 +228,19 @@ def cmd_redisenar(args) -> None:
 
     deck, out = Path(args.deck), Path(args.out)
     engine = _engine(args)
+    if args.logo_cliente:
+        # Logo del cliente que no está en ninguna slide (p. ej. el de la plantilla que lista `leer`):
+        # va directo al bloque NEO | cliente de todas las slides y gana al que marque el plan.
+        from PIL import Image
+
+        logo = Path(args.logo_cliente).expanduser()
+        try:
+            with Image.open(logo) as im:
+                im.load()
+        except (OSError, ValueError):
+            _salida({"ok": False, "error": f"--logo-cliente: no se puede leer la imagen {logo} (usa PNG o JPG)"}, 2)
+        engine.client_logo_path = str(logo)
+    engine.client_logo_dark = args.logo_cliente_oscuro
     manifest = engine.analyze(deck).manifest
     try:
         decisiones = plan_skill.cargar(Path(args.plan))
@@ -383,17 +403,30 @@ def cmd_entregar(args) -> None:
     opt = optimize(prs)
     prs.save(str(out))
     revision = inspeccion.revisar(out)
+    # Lo que la persona aprobó en el plan y `verificar` ya descontó sin abrir la verificación:
+    # textos cambiados (`text_overrides`), rótulos juntados (`consolidate_labels`) e imágenes
+    # tratadas (sin fondo blanco o recodificadas). Quedan a la vista en el informe.
+    del_plan = {"textos_aprobados": verificacion.get("cambios_pedidos", []),
+                "rotulos_consolidados": verificacion.get("rotulos_consolidados", []),
+                "imagenes_tratadas": verificacion.get("imagenes_tratadas", [])}
+    if not verificacion["ok"]:
+        contenido = "con cambios pedidos por la persona"
+    elif del_plan["textos_aprobados"] or del_plan["rotulos_consolidados"]:
+        contenido = "completo, con los cambios aprobados en el plan"
+    else:
+        contenido = "completo"
     informe = {
         "archivo": str(out), "mb": round(out.stat().st_size / 1e6, 1), "optimizacion": opt,
-        "contenido": "completo" if verificacion["ok"] else "con cambios pedidos por la persona",
-        "cambios_pedidos": args.cambios_pedidos, "verificacion": verificacion,
+        "contenido": contenido,
+        "cambios_pedidos": args.cambios_pedidos, **del_plan, "verificacion": verificacion,
         "salvedades": revision["hallazgos"], "salvedades_por_codigo": revision["por_codigo"],
         "notas": args.nota or [],
     }
     ruta = out.with_name(out.stem + "_entrega.json")
     ruta.write_text(json.dumps(informe, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     _salida({"ok": True, "archivo": str(out), "mb": informe["mb"], "informe": str(ruta),
-             "contenido": informe["contenido"], "salvedades_por_codigo": revision["por_codigo"]})
+             "contenido": informe["contenido"], "salvedades_por_codigo": revision["por_codigo"],
+             **{clave: len(valor) for clave, valor in del_plan.items() if valor}})
 
 
 def main() -> None:
@@ -419,6 +452,11 @@ def main() -> None:
     p.add_argument("deck")
     p.add_argument("--plan", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--logo-cliente", metavar="RUTA",
+                   help="imagen del logo del cliente para el bloque NEO | cliente (gana al logo marcado en el plan)")
+    p.add_argument("--logo-cliente-oscuro", choices=("auto", "original", "invertir"), default="auto",
+                   help="logo del cliente en fondo oscuro: auto (conserva el logo si trae fondo o bloque propio), "
+                        "original (siempre igual) o invertir (lo negro y gris pasa a blanco)")
     p.set_defaults(fn=cmd_redisenar)
 
     p = sub.add_parser("crear")

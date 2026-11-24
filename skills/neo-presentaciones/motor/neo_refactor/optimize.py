@@ -22,6 +22,7 @@ from pptx.opc.constants import RELATIONSHIP_TYPE as RT
 from pptx.opc.packuri import PackURI
 from pptx.oxml.ns import qn
 
+from .bg_clear import source_sha
 from .parser import EMU_PER_PT, _Transform
 
 R_EMBED = qn("r:embed")
@@ -159,7 +160,9 @@ def optimize(prs, ppi: float = 200, jpeg_quality: int = 85, skip_slides=frozense
     for n, (part, (w_px, h_px)) in enumerate(need.items()):
         blob = part.blob
         sha = hashlib.md5(blob).hexdigest()[:10]
-        cls = classes.get(sha)
+        # Una captura sin fondo blanco (`bg_clear`) es un archivo nuevo: hereda la clase de su
+        # original, así sigue en PNG, a 300 ppi y con la guarda de detalle.
+        cls = classes.get(sha) or classes.get(source_sha(sha) or "")
         policy = POLICIES.get(cls, UNCLASSIFIED)
         record = {"part": str(part.partname), "sha": sha, "class": cls, "format_before": part.content_type,
                   "bytes_before": len(blob)}

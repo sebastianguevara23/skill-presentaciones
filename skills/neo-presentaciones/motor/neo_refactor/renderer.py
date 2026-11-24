@@ -130,6 +130,10 @@ def add_rect(slide, el: RRect, name: str):
     if el.fill:
         sh.fill.solid()
         sh.fill.fore_color.rgb = _rgb(el.fill)
+        if el.alpha is not None and el.alpha < 1:
+            # Color de la paleta con alfa (`a:alpha`): la auditoría lo sigue leyendo como el token.
+            color = sh._element.spPr.find(qn("a:solidFill"))[0]
+            color.append(color.makeelement(qn("a:alpha"), {"val": str(round(el.alpha * 100000))}))
     else:
         sh.fill.background()
     if el.line:
@@ -194,21 +198,59 @@ def add_text(slide, el: RText, name: str):
 
 
 def _bullet(p, indent: float, numbering: str | None = None, start_at: int | None = None):
-    """Viñeta del autor: marca en la sangría, colgada; hereda el color del texto. Con
+    """Viñeta del autor: marca en la sangría, colgada, con la viñeta de marca (`BULLET`). Con
     `numbering`, la numeración automática del autor (`1.`, `a)`…) en vez de «•»."""
     ppr = p._p.get_or_add_pPr()
     ppr.set("marL", str(int(_pt(indent))))
     ppr.set("indent", str(-int(_pt(indent if numbering else min(indent, 10.0)))))
-    for tag in ("a:buNone", "a:buFont", "a:buChar", "a:buAutoNum"):
-        for old in ppr.findall(qn(tag)):
-            ppr.remove(old)
+    write_bullet(ppr, numbering, start_at)
+
+
+# Viñeta de marca (`tokens.yaml` → `brand_rules.bullet`): «•» en Arial, azul NEO y al 100 % del
+# texto. Sin `buClr` ni `buSzPct` la viñeta tomaba el navy y el tamaño del texto (deck de
+# cliente, 2026-11-23). El renderer no lee tokens: `brand_fix` pasa el color resuelto.
+BULLET = {"char": "•", "font": "Arial", "color": "2D5BFF", "size_pct": 100}
+# Hijos de viñeta de `a:pPr` / `a:lvlNpPr`, y los que el esquema (CT_TextParagraphProperties)
+# pone después: lnSpc, spcBef, spcAft, buClr*, buSz*, buFont*, buNone|buAutoNum|buChar|buBlip,
+# tabLst, defRPr, extLst. PowerPoint rechaza el archivo si una viñeta va después de `defRPr`.
+BULLET_TAGS = tuple(qn(f"a:{t}") for t in ("buClrTx", "buClr", "buSzTx", "buSzPct", "buSzPts",
+                                           "buFontTx", "buFont", "buNone", "buAutoNum", "buChar", "buBlip"))
+_AFTER_BULLET = frozenset(qn(f"a:{t}") for t in ("tabLst", "defRPr", "extLst"))
+
+
+def bullet_nodes(ppr, numbering: str | None = None, start_at: int | None = None,
+                 color: str = BULLET["color"], marker: bool = True) -> list:
+    """Hijos de la viñeta de marca en el orden del esquema: color, tamaño y, con `marker`, la
+    marca («•» en Arial, o `buAutoNum` sin `buFont`: el número usa la letra del texto)."""
+    clr = ppr.makeelement(qn("a:buClr"), {})
+    clr.append(clr.makeelement(qn("a:srgbClr"), {"val": color.upper()}))
+    nodes = [clr, ppr.makeelement(qn("a:buSzPct"), {"val": str(int(BULLET["size_pct"] * 1000))})]
+    if not marker:
+        return nodes
     if numbering:
-        # Sin `buFont`: el número usa la letra del texto (Montserrat), como en el original.
-        ppr.append(ppr.makeelement(qn("a:buAutoNum"), {"type": numbering, **(
-            {"startAt": str(start_at)} if start_at else {})}))
-        return
-    ppr.append(ppr.makeelement(qn("a:buFont"), {"typeface": "Arial"}))
-    ppr.append(ppr.makeelement(qn("a:buChar"), {"char": "•"}))
+        return [*nodes, ppr.makeelement(qn("a:buAutoNum"), {"type": numbering, **(
+            {"startAt": str(start_at)} if start_at else {})})]
+    return [*nodes, ppr.makeelement(qn("a:buFont"), {"typeface": BULLET["font"]}),
+            ppr.makeelement(qn("a:buChar"), {"char": BULLET["char"]})]
+
+
+def place_bullet(ppr, nodes: list) -> None:
+    """Quita la viñeta que tenga `ppr` y escribe `nodes` en su lugar del esquema: después de
+    lnSpc/spcBef/spcAft y antes de tabLst/defRPr/extLst."""
+    for child in [c for c in ppr if c.tag in BULLET_TAGS]:
+        ppr.remove(child)
+    anchor = next((child for child in ppr if child.tag in _AFTER_BULLET), None)
+    for node in nodes:
+        if anchor is None:
+            ppr.append(node)
+        else:
+            anchor.addprevious(node)
+
+
+def write_bullet(ppr, numbering: str | None = None, start_at: int | None = None,
+                 color: str = BULLET["color"]) -> None:
+    """Viñeta de marca completa en `ppr` (un `a:pPr` o `a:lvlNpPr`)."""
+    place_bullet(ppr, bullet_nodes(ppr, numbering, start_at, color))
 
 
 def add_element(slide, el, index: int):

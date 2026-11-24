@@ -2,9 +2,11 @@
 
 Rediseña `ejemplos/deck-de-prueba.pptx` (con `separar` para la agenda), crea un deck desde
 `ejemplos/guion-ejemplo.json`, y en los dos casos mira, revisa, verifica y entrega. Además
-comprueba que la verificación atrape una cifra cambiada.
+comprueba que la verificación atrape una cifra cambiada. Al final corre las pruebas por tema
+de `tools/pruebas/` (verificación, marca, imágenes y matriz, logos).
 
-Uso: python3 tools/probar.py   (necesita uv y LibreOffice, como la skill)
+Uso: python3 tools/probar.py [--rapido]   (necesita uv y LibreOffice, como la skill;
+--rapido salta las pruebas por tema)
 """
 from __future__ import annotations
 
@@ -90,6 +92,16 @@ def main() -> None:
 
         cat = neo("catalogo", cwd=t)
         comprobar(len(cat.get("familias", {})) >= 20, "catalogo: familias del motor")
+
+    # Pruebas por tema (`tools/pruebas/`): cada una arma sus propios decks y sale con 1 si falla.
+    if "--rapido" not in sys.argv:
+        for prueba in sorted((RAIZ / "tools" / "pruebas").glob("*.py")):
+            proc = subprocess.run(["uv", "run", "--quiet", "--with", "python-pptx==1.0.2", "--with", "pillow==12.3.0",
+                                   "python", str(prueba)], capture_output=True, text=True, cwd=RAIZ)
+            controles = sum(1 for linea in proc.stdout.splitlines() if linea.startswith(("ok", "FALLA")))
+            comprobar(proc.returncode == 0, f"pruebas/{prueba.name}: {controles} controles")
+            if proc.returncode != 0:
+                fallas.append(proc.stdout[-1500:] + proc.stderr[-800:])
 
     if fallas:
         print("\n" + "\n\n".join(fallas))

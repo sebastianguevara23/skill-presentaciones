@@ -13,7 +13,7 @@ import re
 
 from PIL import Image
 
-from . import cobrand, textmetrics as tm
+from . import bg_clear, cobrand, textmetrics as tm
 from .cleanup import strip_emojis_in_runs
 from .cobrand import ClientLogo
 from .design_policies import centered_body_top
@@ -35,6 +35,9 @@ MIN_PPI = 72
 # Clases de imagen (`asset_classes` del plan) que conservan sus colores aunque vayan en el
 # lugar de un ícono: un logo de partner en negro no es un glifo de NEO.
 KEEP_ICON_COLORS = {"logo", "client_logo", "source", "photo", "screenshot", "chart", "diagram"}
+# Imágenes con texto o datos (0.2.0): en una slide clara pierden su fondo blanco (D2,
+# `bg_clear.py`) y, si son todas así, image_text las muestra como protagonistas (2.1).
+SCREEN_CLASSES = {"screenshot", "chart", "diagram"}
 
 
 # ---------------------------------------------------------------- texto
@@ -147,6 +150,43 @@ def emphasize(para: RPara, phrase: str, emph: Style) -> tuple[RPara, bool]:
     return para.model_copy(update={"runs": _merge(out)}), True
 
 
+def first_word_split(paras: list[RPara], st: Style) -> list[RPara]:
+    """La primera palabra del título en el color del estilo y el resto con su énfasis.
+
+    Solo cuentan los runs del tamaño del título: una bajada (`_title_tail`) conserva su estilo.
+    Una palabra partida entre runs sigue siendo una; un título de una palabra queda todo en el
+    color base. Un hipervínculo conserva su color.
+    """
+    if not st.emphasis:
+        return paras
+    emph = {"font": st.emphasis.font, "bold": st.emphasis.bold, "italic": st.emphasis.italic}
+    state = 0   # 0: antes de la primera palabra, 1: dentro de ella, 2: después
+    out = []
+    for p in paras:
+        runs: list[RRun] = []
+        for r in p.runs:
+            upd = {**emph, **({} if r.hyperlink else {"color": st.emphasis.color})}
+            if r.size != st.size or state == 2:
+                runs.append(r if r.size != st.size else r.model_copy(update=upd))
+                continue
+            cut = None
+            for k, ch in enumerate(r.text):
+                if state == 0 and not ch.isspace():
+                    state = 1
+                elif state == 1 and ch.isspace():
+                    state, cut = 2, k
+                    break
+            if cut is None:
+                runs.append(r)
+            else:
+                runs += [r.model_copy(update={"text": r.text[:cut]}),
+                         r.model_copy(update={"text": r.text[cut:], **upd})]
+        if state == 1:   # el párrafo termina la primera palabra
+            state = 2
+        out.append(p.model_copy(update={"runs": _merge(runs)}))
+    return out
+
+
 def resize(paras: list[RPara], size: float) -> list[RPara]:
     return [p.model_copy(update={"runs": [r.model_copy(update={"size": size}) for r in p.runs]}) for p in paras]
 
@@ -184,7 +224,8 @@ def fit_heading(paras: list[RPara], st: Style, width: float, max_lines: int, saf
     """Reduce tamaño (hasta st.min) si excede max_lines y luego corrige huérfanas.
 
     Solo se reducen los runs del título: una bajada dentro del título (`title_tail`) ya
-    tiene su tamaño.
+    tiene su tamaño. El título de slide tiene `min` = `size` (D3, 2026-11-23): nunca se
+    achica, y si no entra en `max_lines` queda `heading_too_long`.
     """
     size = st.size
     floor = max(st.min or st.size, 11)
@@ -376,7 +417,39 @@ class Composer:
         elif cls.layout == "card_grid" and cls.variant != "template":
             from .design_policies import center_card_composition
             center_card_composition(rendered, self.kn)
+        self._clear_backgrounds(spec, cls, rendered)
         return rendered
+
+    def _clear_backgrounds(self, spec: SlideSpec, cls: SlideClassification, rendered: RenderedSlide) -> None:
+        """Capturas, gráficos y diagramas sin su fondo blanco en las slides claras (D2, 0.2.0).
+
+        El PNG limpio se escribe junto a la media del trabajo y la imagen apunta a él: posición,
+        tamaño y recorte no cambian. Nunca en slides oscuras; `image_background: "keep"` lo
+        apaga por slide. Si se quitaría casi toda la imagen, queda como está y con un aviso.
+        image_text ya las midió sin fondo (`_without_background`): aquí quedan como están.
+        """
+        if rendered.mode != "light" or cls.image_background == "keep":
+            return
+        classes = self.asset_classes.get(spec.index, {})
+        for el in rendered.elements:
+            if not isinstance(el, RPicture) or el.brand or el.shape != "rect" or not el.sources:
+                continue
+            if classes.get(el.sources[0]) not in SCREEN_CLASSES:
+                continue
+            path, reason = bg_clear.cleared_copy(el.path)
+            if path:
+                el.path = path
+            elif reason == "too_much":
+                rendered.compose_issues.append(f"image_background_kept:{el.sources[0]}")
+
+    def _without_background(self, spec: SlideSpec, cls: SlideClassification, out: RenderedSlide,
+                            img: ImageBlock) -> ImageBlock:
+        """La imagen apuntando a su PNG sin fondo blanco, si le corresponde (ver `_clear_backgrounds`)."""
+        if (out.mode != "light" or cls.image_background == "keep"
+                or self.asset_classes.get(spec.index, {}).get(img.id) not in SCREEN_CLASSES):
+            return img
+        path, _reason = bg_clear.cleared_copy(img.path)
+        return img.model_copy(update={"path": path}) if path else img
 
     def _title(self, spec, cls, mode, role, width, max_lines, size: float | None = None, cover: bool = False):
         st = self.kn.style(mode, role)
@@ -554,9 +627,11 @@ class Composer:
         out = self._base(spec, cls, mode)
         g = self.kn.geometry("section")
         x, width = g["x"], g["width"]
-        # La portada clara usa su propio estilo: 45 pt navy con el énfasis en azul, sin itálica.
-        tp, tw, iss = self._title(spec, cls, mode, "cover_title" if mode == "light" else "title", width, 2,
-                                  cover=mode == "light")
+        if mode == "light":
+            # La portada clara usa su propio estilo: 45 pt navy con el énfasis en azul, sin itálica.
+            tp, tw, iss = self._title(spec, cls, mode, "cover_title", width, 2, cover=True)
+        else:
+            tp, tw, iss = self._separator_title(spec, cls, width)
         out.compose_issues += iss
         lines = n_lines(tp, tw)
         if lines > 1:   # en dos líneas o más el título va más apretado (section.yaml)
@@ -565,9 +640,16 @@ class Composer:
         top = g["title_top_one_line"] if lines <= 1 else g["title_top_two_lines"]
         title = self._tx("title", tp, x, top, tw, "header", [cls.title])
         out.elements.append(title)
-        if mode == "dark" and len(spec.text_by_id(cls.title).text.split()) == 1:
-            from .design_policies import separator_companion
-            out.elements.extend(separator_companion(self.kn))
+        bottom = title.box.bottom
+        if mode == "dark":
+            # Separador (D1): la línea azul bajo el título, alineada a su x; reemplaza al patrón
+            # geométrico que acompañaba a los títulos de una palabra.
+            rule = self.kn.component("separator_line")
+            line = RRect(role="separator_line", box=Box(x=x, y=round(bottom + rule["gap"], 2), w=rule["width"],
+                                                        h=rule["height"]),
+                         fill=self.kn.color(rule["fill"]), group="accent", brand=True)
+            out.elements.append(line)
+            bottom = line.box.bottom
         if cls.kicker:
             kp = self._paras(spec.text_by_id(cls.kicker), self.kn.style(mode, "kicker"))
             kh = tm.block_height(kp, width) + 2
@@ -576,10 +658,28 @@ class Composer:
             sp = self._paras(spec.text_by_id(cls.subtitle), self.kn.style(mode, "subtitle"), inline_bold=True)
             sp, sw, iss = fix_orphans(sp, width * 0.6, width * 0.5, self.safety)
             out.compose_issues += iss
-            out.elements.append(self._tx("subtitle", sp, x, title.box.bottom + g["subtitle_gap"], sw, "header",
+            out.elements.append(self._tx("subtitle", sp, x, bottom + g["subtitle_gap"], sw, "header",
                                         [cls.subtitle]))
         self._notes(spec, cls, out)
         return out
+
+    def _separator_title(self, spec: SlideSpec, cls: SlideClassification,
+                         width: float) -> tuple[list[RPara], float, list[str]]:
+        """Título del separador oscuro (D1, 2026-11-23): en una línea, de 45 a 32 pt
+        (`styles.dark.title`), con la primera palabra en blanco y el resto en el énfasis del
+        estilo (blue_pale, ExtraBold, sin itálica). El énfasis del plan o del autor no aplica.
+
+        Si no entra en una línea ni a 32 pt, va en dos líneas desde 45 (como antes del cambio)
+        y queda el issue `separator_title_two_lines` para proponer un título corto.
+        """
+        st = self.kn.style("dark", "title")
+        paras = [self._title_tail(p, st, "dark") for p in spec.text_by_id(cls.title).paragraphs if p.text.strip()]
+        paras = first_word_split([p for p in paras if p.text.strip()], st)
+        one, w, _, issues = fit_heading(paras, st, width, 1, self.safety)
+        if "heading_too_long" not in issues:
+            return one, w, issues
+        two, w, _, issues = fit_heading(paras, st, width, 2, self.safety)
+        return two, w, ["separator_title_two_lines", *issues]
 
     @staticmethod
     def _unit_block(spec: SlideSpec, card) -> TextBlock:
@@ -1381,7 +1481,8 @@ class Composer:
         g = self.kn.geometry("image_text")
         has_header = bool(cls.title or cls.kicker or cls.subtitle)
         top = self._header(spec, cls, out, "title", 2) + g["body_gap"] if has_header else g["top_without_header"]
-        self._image_message(spec, cls, out, g["x"], g["width"], top, self.kn.tokens["margins"]["bottom_limit"], ratio)
+        self._image_message(spec, cls, out, g["x"], g["width"], top, self.kn.tokens["margins"]["bottom_limit"], ratio,
+                            protagonist=True)
         self._notes(spec, cls, out)
         return out
 
@@ -1391,9 +1492,15 @@ class Composer:
         return max((el.box.bottom for el in out.elements[before:]), default=top)
 
     def _image_message(self, spec: SlideSpec, cls: SlideClassification, out: RenderedSlide, x: float,
-                       width: float, top: float, bottom: float, ratio: float | None = None) -> float:
+                       width: float, top: float, bottom: float, ratio: float | None = None,
+                       protagonist: bool = False, column: float | None = None) -> float:
         """Cuerpo de image_text dentro de una región (bloque `image_message` de la composición
-        libre); devuelve el borde inferior usado."""
+        libre); devuelve el borde inferior usado.
+
+        `protagonist` (solo el layout image_text) habilita la imagen protagonista: si todas las
+        imágenes son capturas, gráficos o diagramas, el texto va en una columna de ancho
+        `column` (`protagonist.text_column` la primera vez) y la imagen toma el resto.
+        """
         g = {**self.kn.geometry("image_text"), "x": x, "width": width}
         before, issues_before = len(out.elements), len(out.compose_issues)
         height = bottom - top
@@ -1411,7 +1518,10 @@ class Composer:
                 and areas[0] < g["primary_ratio"] * areas[1]):
             self._photo_cards(spec, cls, out, top, height, g)
             return self._used_bottom(out, before, top)
-        images = [self._trim_transparent(spec.image_by_id(iid))
+        # Una captura se mide ya sin su fondo blanco (D2): el margen que queda transparente se
+        # recorta y la imagen se mide por su contenido, que así sale más grande y alineado con
+        # el texto.
+        images = [self._trim_transparent(self._without_background(spec, cls, out, spec.image_by_id(iid)))
                   for iid in [*cls.images, *(c.image for c in cls.cards if c.image)]]
         st = self.kn.style("light", "body")
         # Un bloque que es solo un rótulo breve con su imagen («Proceso y Demo:») es el rótulo
@@ -1442,20 +1552,37 @@ class Composer:
             l, t, r, b = img.crop
             return iw * (1 - l - r), ih * (1 - t - b)
 
+        # Imagen protagonista (2.1): todas las imágenes son capturas, gráficos o diagramas y hay
+        # mensaje. Las fotos siguen con `image_ratio` (el 40 % es deliberado, 2026-09-23).
+        classes = self.asset_classes.get(spec.index, {})
+        prot = g.get("protagonist") if (
+            protagonist and ratio is None and groups and images
+            and all(classes.get(img.id) in SCREEN_CLASSES for img in images)
+        ) else None
+
         # Imagen principal + retrato: la principal toma la columna y las menores van con el texto.
         areas = [img.box.w * img.box.h for img in images]
         primary = max(range(len(images)), key=areas.__getitem__) if images else None
         side: list[ImageBlock] = []
-        if groups and len(images) > 1 and all(
+        if groups and len(images) > 1 and not prot and all(
             areas[primary] >= g["primary_ratio"] * area for k, area in enumerate(areas) if k != primary
         ):
             side = [img for k, img in enumerate(images) if k != primary]
             images = [images[primary]]
 
+        text_col = 0.0
         if not groups:
             image_w = g["width"]
         elif not images:
             image_w = 0.0
+        elif prot:
+            text_col = column or prot["text_column"]
+            if column is None:
+                # Más angosta si el texto ocupa menos, nunca bajo `text_column_min`.
+                widest = max(hug_width(self._paras(spec.text_by_id(bid), st, inline_bold=True), self.safety)
+                             for group in groups for bid in group) + g["accent_inset"]
+                text_col = min(text_col, max(widest, g["text_column_min"]))
+            image_w = g["width"] - text_col - prot["column_gap"]
         elif side:
             widest = max(hug_width(self._paras(spec.text_by_id(bid), st, inline_bold=True), self.safety)
                          for group in groups for bid in group)
@@ -1469,7 +1596,8 @@ class Composer:
                                   g["image_gap"]) if images else []
         for k, (img, ((dx, dy, cw, ch), align)) in enumerate(zip(images, cells)):
             if groups and len(images) == 1:
-                align = (0.0, 0.5)   # una sola imagen: pegada al margen, el mensaje a su lado
+                # una sola imagen: pegada al margen, el mensaje a su lado (protagonista: arriba)
+                align = (0.0, 0.0 if prot else 0.5)
             bid = captions.get(img.id)
             if not bid:
                 pictures.append(self._fit_image(img, g["x"] + dx, top + dy, cw, ch, f"image{k + 1}", align=align))
@@ -1513,8 +1641,9 @@ class Composer:
         if not groups:
             return self._used_bottom(out, before, top)
 
-        text_x = used_right + g["column_gap"] if pictures else g["x"]
-        text_w = g["x"] + g["width"] - text_x
+        text_x = used_right + (prot or g)["column_gap"] if pictures else g["x"]
+        # Protagonista: el texto en su columna; el bloque se centra al final.
+        text_w = text_col if prot else g["x"] + g["width"] - text_x
         card = self.kn.component("team_card")
         # Sin card (por defecto) el mensaje va sobre el fondo con una barra azul de acento a
         # su izquierda; `message_card: true` vuelve a la tarjeta blanca.
@@ -1593,7 +1722,7 @@ class Composer:
         image_h = (max(p.box.bottom for p in pictures) - image_top) if pictures else height
         target = min(image_h, height) - 2 * pad
         chosen = None
-        for size in range(int(g["body_max"]), int(st.min or st.size) - 1, -1):
+        for size in range(int((prot or g)["body_max"]), int(st.min or st.size) - 1, -1):
             built, heights, content = build(float(size))
             if content <= target or (size <= st.size and content + 2 * pad <= height):
                 chosen = (built, heights, content)
@@ -1601,7 +1730,7 @@ class Composer:
         # Bloques breves que apilados no caben: dos columnas dentro de la tarjeta, en orden
         # de lectura (primero la izquierda) y con la división que más equilibra las alturas.
         split_at, col_w = len(groups), inner_w
-        if chosen is None and len(groups) >= 2 and not side:
+        if chosen is None and len(groups) >= 2 and not side and not prot:
             col_w = (inner_w - g["column_gap"]) / 2
             size = float(st.min or st.size)
             built2, heights2, _ = build(size, col_w)
@@ -1615,6 +1744,15 @@ class Composer:
                 chosen, split_at = (built2, heights2, content2), k
             else:
                 col_w = inner_w
+        if chosen is None and prot:
+            # Protagonista: la columna de texto se ensancha por pasos; después, el modo de siempre.
+            wider = [c for c in prot.get("text_column_steps", []) if c > (column or prot["text_column"]) + 1e-6]
+            del out.elements[before:]
+            del out.compose_issues[issues_before:]
+            if wider:
+                return self._image_message(spec, cls, out, x, width, top, bottom, None, protagonist=True,
+                                           column=wider[0])
+            return self._image_message(spec, cls, out, x, width, top, bottom, g["image_ratio"])
         if chosen is None:
             # Antes de declarar el desborde, la imagen cede ancho al mensaje.
             current = ratio or g["image_ratio"]
@@ -1632,7 +1770,9 @@ class Composer:
         card_h = content + 2 * pad if compact or not message_card else max(content + 2 * pad,
                                                                            image_h if pictures else 0.0)
         card_h = min(card_h, height) if content + 2 * pad <= height else content + 2 * pad
-        if compact or (not message_card and pictures and card_h <= image_h + 0.5):
+        if prot and pictures and prot.get("align", "top") == "top":
+            y = image_top   # imagen y texto alineados arriba; la barra mide lo que el texto
+        elif compact or (not message_card and pictures and card_h <= image_h + 0.5):
             y = image_top + (image_h - card_h) / 2
         elif pictures and card_h <= image_h + 0.5:
             y = image_top
@@ -1676,7 +1816,23 @@ class Composer:
                 out.elements.append(el)
                 by = el.box.bottom + g["block_gap"]
             cy = start + group_h + g["paragraph_gap"]
+        if prot and prot.get("center_block"):
+            self._center_region(out.elements[before:], x, width, top, bottom)
         return self._used_bottom(out, before, top)
+
+    @staticmethod
+    def _center_region(elements: list, x: float, width: float, top: float, bottom: float) -> None:
+        """Centra un bloque ya armado en horizontal y en vertical dentro de la región (D4).
+        Si no sobra alto, queda arriba, en `top`."""
+        if not elements:
+            return
+        left, right = min(el.box.x for el in elements), max(el.box.right for el in elements)
+        upper, lower = min(el.box.y for el in elements), max(el.box.bottom for el in elements)
+        dx = x + (width - (right - left)) / 2 - left
+        dy = top + max(0.0, (bottom - top - (lower - upper)) / 2) - upper
+        for el in elements:
+            el.box.x = round(el.box.x + dx, 2)
+            el.box.y = round(el.box.y + dy, 2)
 
     def _block_gallery(self, spec: SlideSpec, cls: SlideClassification, out: RenderedSlide,
                        top: float, height: float, g: dict) -> None:
@@ -2097,15 +2253,27 @@ class Composer:
         banner_paras, banner_h = self._banner_block(spec, cls, g["width"])
         if banner_paras:
             bottom -= banner_h + g["banner_gap"]
-        used = self._matrix_table(spec, cls, out, g["x"], g["width"], top, bottom)
+        before = len(out.elements)
+        used = self._matrix_table(spec, cls, out, g["x"], g["width"], top, bottom, g.get("row_target"))
+        if g.get("center_block") and not cls.fill and used < bottom:
+            # D4 (0.2.0): si sobra alto, la tabla y su banner se centran entre el encabezado y
+            # el pie (antes quedaban pegados al título). El encabezado no se mueve.
+            shift = round((bottom - used) / 2, 2)
+            for el in out.elements[before:]:
+                el.box.y = round(el.box.y + shift, 2)
+            used += shift
         if banner_paras:
             self._draw_banner(cls, out, banner_paras, banner_h, used + g["banner_gap"], g)
         self._notes(spec, cls, out)
         return out
 
     def _matrix_table(self, spec: SlideSpec, cls: SlideClassification, out: RenderedSlide, x: float,
-                      width: float, top: float, bottom: float) -> float:
-        """La tabla de matrix dentro de una región; devuelve el borde inferior usado."""
+                      width: float, top: float, bottom: float, row_target: float | None = None) -> float:
+        """La tabla de matrix dentro de una región; devuelve el borde inferior usado.
+
+        `row_target` (solo el layout matrix): si sobra alto, las filas crecen hasta esa altura.
+        `cls.highlight_column` destaca una columna (1-based tal como se ve).
+        """
         comp = self.kn.component("matrix")
         gap, pad = comp["gap"], comp["padding"]
 
@@ -2197,19 +2365,37 @@ class Composer:
             size -= 1
             heads, head_h = build_heads(size)
         available = bottom - top - (head_h + gap if heads else 0.0) - gap * (len(rows) - 1)
+        natural = list(row_h)
         if sum(row_h) > available:
             out.compose_issues.append(f"cards_overflow:{sum(row_h) - available:.0f}pt")
         elif cls.fill:
             extra = (available - sum(row_h)) / len(rows)
             row_h = [h + extra for h in row_h]
+        elif row_target:
+            # D4: con alto de sobra las filas crecen hasta `row_target`; con poco, lo que alcance
+            # (repartido según lo que le falta a cada una); sin alto, se quedan con el natural.
+            want = [max(0.0, row_target - h) for h in row_h]
+            if sum(want) > 0:
+                k = min(1.0, (available - sum(row_h)) / sum(want))
+                row_h = [h + w * k for h, w in zip(row_h, want)]
+        grown = [h > n + 0.5 for h, n in zip(row_h, natural)]
+
+        # Columna destacada (2.5): 1-based tal como se ve; la de rótulos cuenta como 1.
+        highlight = None
+        if cls.highlight_column:
+            if cls.highlight_column <= ncols:
+                highlight = cls.highlight_column - 1
+            else:
+                out.compose_issues.append(f"highlight_column_out_of_range:{cls.highlight_column}")
 
         y = top
         if heads:
             for col, (paras, w, iss) in heads.items():
                 out.compose_issues += iss
                 grp = f"head{col + 1}"
+                head_fill = comp["highlight_header"] if col == highlight else comp["header_fill"]
                 out.elements.append(RRect(role="matrix_head", box=Box(x=col_x[col], y=y, w=col_w[col], h=head_h),
-                                          fill=self.kn.color(comp["header_fill"]), line=self.kn.color(comp["label_line"]),
+                                          fill=self.kn.color(head_fill), line=self.kn.color(comp["label_line"]),
                                           line_width=comp["label_line_width"], radius=comp["radius"], group=grp))
                 text = self._tx("matrix_head_text", paras, col_x[col] + pad, y + pad, w, grp, header_cols[col])
                 text.box.h = round(max(0.0, head_h - 2 * pad), 2)
@@ -2222,13 +2408,19 @@ class Composer:
                 grp = f"cell{r + 1}_{col + 1}"
                 label = labelled and col == 0
                 fill = comp["label_fill"] if label else comp["cell_fill"]
+                alpha = None
+                if col == highlight:
+                    fill, alpha = comp["highlight_fill"], comp["highlight_alpha"] / 100
                 out.elements.append(RRect(role="matrix_cell", box=Box(x=col_x[col], y=y, w=col_w[col], h=height),
                                           fill=self.kn.color(fill),
                                           line=self.kn.color(comp["label_line"]),
                                           line_width=comp["label_line_width"], radius=comp["radius"],
-                                          shadow=None if label else self.kn.shadow(comp["cell_shadow"]), group=grp))
+                                          shadow=None if label or alpha else self.kn.shadow(comp["cell_shadow"]),
+                                          group=grp, alpha=alpha))
                 text = self._tx("matrix_text", paras, col_x[col] + pad, y + pad, w, grp, [rows[r][position]])
                 text.box.h = round(max(0.0, height - 2 * pad), 2)
+                if grown[r]:
+                    text.anchor = "ctr"   # fila que creció: el texto al medio, no pegado arriba
                 if label and not cls.fill:
                     text.box.y = round(y + (height - text.box.h) / 2, 2)
                 out.elements.append(text)

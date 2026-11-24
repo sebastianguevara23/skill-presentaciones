@@ -40,10 +40,16 @@ brand_rules:
     text_size: 17
     underline_box: [345, 241, 30, 0.6]
     reference: "Referencia v2, slide 32, revisión del usuario 2026-09-30"
+  # Separador oscuro (D1, 2026-11-23): sin el patrón geométrico, también con una sola palabra.
+  # Lo acompaña la línea azul bajo el título (`components.separator_line`).
   single_word_separator:
-    companion_required: true
-    component: neo_outline_geometry
+    companion_required: false
+    component: null
     invent_copy: false
+  # Viñeta de marca (2026-11-23): «•» en Arial, azul y al 100 % del texto. Las numeraciones
+  # (`buAutoNum`) conservan su tipo y van en el mismo color y tamaño. La escriben el renderer
+  # (`renderer.BULLET`) y `brand_fix` en las slides que conservan su organización.
+  bullet: {char: "•", font: Arial, color: blue, size_pct: 100}
   table:
     style: flat_grid
     header_fill: "000033"
@@ -146,7 +152,9 @@ brand:
 styles:
   light:
     kicker:    {font: Montserrat SemiBold, size: 11, color: blue, line: 1.0}
-    title:     {font: Montserrat ExtraBold, size: 21, color: navy, line: 0.95, min: 16,
+    # Título de slide (D3, 2026-11-23): 21 pt fijos (42 en el archivo final), nunca se achica
+    # (`min` = `size`). Si no entra en dos líneas queda el aviso `heading_too_long`.
+    title:     {font: Montserrat ExtraBold, size: 21, color: navy, line: 0.95, min: 21,
                 emphasis: {font: Montserrat ExtraBold, italic: true, color: blue}}
     # Título de la portada clara: la primera palabra en navy y el resto en azul de marca
     # («Neo Consulting», 2026-10-01; `design_policies.cover_emphasis`).
@@ -221,8 +229,12 @@ styles:
     panel_prompt: {font: Montserrat SemiBold, size: 11, color: navy, line: 1.06}
   dark:
     kicker:    {font: Montserrat SemiBold, size: 12, color: blue_pale, line: 1.0}
+    # Título del separador (D1, 2026-11-23): una línea, de 45 a 32 pt (90 a 64 en el archivo
+    # final). La primera palabra va en blanco y el resto en `emphasis` (blue_pale, ExtraBold, sin
+    # itálica); con una sola palabra, todo en blanco. Si no entra ni a 32, va en dos líneas
+    # (issue `separator_title_two_lines`). Ver `composer._separator_title`.
     title:     {font: Montserrat ExtraBold, size: 45, color: white, line: 0.9, min: 32,
-                emphasis: {font: Montserrat Black, italic: true, color: separator_blue}}
+                emphasis: {font: Montserrat ExtraBold, color: blue_pale}}
     subtitle:  {font: Montserrat Medium, size: 13, color: blue_pale, line: 1.06}
     note:      {font: Montserrat Medium, size: 11, color: blue_pale, line: 1.0}
     citation:  {font: Montserrat, size: 8, color: blue_pale, line: 1.0}
@@ -251,6 +263,9 @@ components:
   # Barra de acento junto al título (slide 68 de la referencia: 4,5 × 25,5 pt) y divisor bajo el
   # encabezado: acentos de marca sin contenido de la composición libre.
   accent_bar:  {fill: blue, radius: 2, shadow: accent_bar, width: 4.5, height: 25.5, gap: 8}
+  # Línea del separador oscuro (D1, 2026-11-23): horizontal, `gap` pt bajo el título y alineada
+  # a su x; el subtítulo baja debajo de ella. 125 × 4 lógicos (250 × 8 en el archivo final).
+  separator_line: {fill: blue, width: 125, height: 4, gap: 14}
   divider:     {line: blue_pale, line_width: 0.75}
   image_frame: {line: blue, line_width: 0.75, radius: 6, padding: 0.9}
   image_frame_collage: {line: blue, line_width: 0.75, radius: 6, padding: 0}
@@ -269,8 +284,11 @@ components:
   worksheet:   {line: blue_pale, line_spacing: 24}
   # Tablas comparativas: encabezado navy, columna de rótulos suave, celdas con borde.
   # Como en Taller 1 v7: rótulo blanco con borde azul, celda blanca con sombra.
+  # Columna destacada (`highlight_column` del plan, 0.2.0): cabecera `highlight_header` y celdas
+  # `highlight_fill` con `highlight_alpha` % de opacidad (deck de cliente: «destacar con blue_pale»).
   matrix:      {gap: 0, padding: 5, radius: 0, header_fill: navy, label_fill: white, label_line: blue_pale,
-                label_line_width: 0.6, cell_fill: white, cell_shadow: null, label_ratio: 0.24}
+                label_line_width: 0.6, cell_fill: white, cell_shadow: null, label_ratio: 0.24,
+                highlight_header: blue, highlight_fill: blue_pale, highlight_alpha: 45}
   # Pasos numerados y paneles laterales de las guías de dinámica.
   step:        {diameter: 20, fill: blue, gap: 10}
   aside:       {fill: navy, radius: 6, padding: 12, gap: 10}

@@ -25,7 +25,8 @@ AIRE_TITULO = 28                   # aire bajo el título (pt)
 GAP = 12                           # separación entre cards (pt)
 
 __all__ = ["PT", "abrir", "slide", "es_card", "unidades", "mover", "rejilla", "centrar_bloque",
-           "llenar_ancho", "traer_al_frente", "reemplazar_marcador", "borrar_slide", "caja_pt"]
+           "llenar_ancho", "traer_al_frente", "reemplazar_marcador", "quitar_fondo_blanco", "borrar_slide",
+           "caja_pt"]
 
 
 def abrir(ruta: str | Path):
@@ -71,6 +72,68 @@ def unidades(s) -> list[tuple]:
 def mover(forma, dx_pt: float = 0, dy_pt: float = 0) -> None:
     forma.left += int(dx_pt * PT)
     forma.top += int(dy_pt * PT)
+
+
+def _caja(c) -> tuple[float, float, float, float]:
+    """Caja (x, y, w, h) en pt de una forma o de una tupla ya en pt."""
+    return caja_pt(c) if hasattr(c, "left") else tuple(float(v) for v in c)
+
+
+def flecha_escuadra(s, desde, hasta, color: str = "2D5BFF", grosor_pt: float = 3, separacion_pt: float = 6):
+    """Flecha en escuadra (forma libre ortogonal con punta) del borde derecho de `desde` a `hasta`.
+
+    Receta de embudo: del borde derecho de cada paso al siguiente, cerca de lo que señala.
+    `desde` y `hasta` son formas o cajas `(x, y, w, h)` en pt del archivo final. Sale del centro
+    del borde derecho de `desde` y la punta (`a:tailEnd` triangular) queda a `separacion_pt` del
+    destino. El trazado depende de dónde está `hasta`:
+
+    - a la derecha y a la misma altura: recta horizontal hasta su borde izquierdo;
+    - a la derecha y más arriba o más abajo: en Z hasta su borde izquierdo;
+    - debajo o encima, con el centro a la derecha de la salida: en L hasta su borde de arriba
+      (o de abajo);
+    - debajo o encima y más a la izquierda (el paso siguiente de un embudo): sale a la derecha,
+      baja (o sube) y vuelve hasta su borde derecho.
+
+    Devuelve la forma.
+    """
+    from pptx.dml.color import RGBColor
+    from pptx.oxml.ns import qn
+
+    dx, dy, dw, dh = _caja(desde)
+    hx, hy, hw, hh = _caja(hasta)
+    sx, sy = dx + dw, dy + dh / 2
+    hcx, hcy = hx + hw / 2, hy + hh / 2
+    sep = separacion_pt
+    if hx >= sx + 2 * sep and hy <= sy <= hy + hh:
+        puntos = [(hx - sep, sy)]
+    elif hx >= sx + 2 * sep:
+        medio = (sx + hx) / 2
+        puntos = [(medio, sy), (medio, hcy), (hx - sep, hcy)]
+    elif hcx > sx + sep:
+        puntos = [(hcx, sy), (hcx, hy - sep if hcy > sy else hy + hh + sep)]
+    else:
+        codo = max(sx, hx + hw) + max(3 * sep, 6 * grosor_pt)
+        puntos = [(codo, sy), (codo, hcy), (hx + hw + sep, hcy)]
+    b = s.shapes.build_freeform(int(sx * PT), int(sy * PT), scale=1.0)
+    b.add_line_segments([(int(x * PT), int(y * PT)) for x, y in puntos], close=False)
+    sh = b.convert_to_shape()
+    sh.fill.background()
+    sh.line.color.rgb = RGBColor.from_string(color.upper())
+    sh.line.width = int(grosor_pt * PT)
+    sh.shadow.inherit = False
+    ln = sh.line._get_or_add_ln()
+    # Orden del esquema en `a:ln`: relleno, guion, unión (miter), headEnd, tailEnd.
+    ln.append(ln.makeelement(qn("a:miter"), {"lim": "800000"}))
+    ln.append(ln.makeelement(qn("a:tailEnd"), {"type": "triangle", "w": "med", "len": "med"}))
+    # Sin el estilo del tema (python-pptx deja effectRef 1: Google y LibreOffice lo dibujan).
+    style = sh._element.find(qn("p:style"))
+    if style is not None:
+        sh._element.remove(style)
+    sh.name = f"flecha_escuadra_{sh.shape_id}"
+    return sh
+
+
+__all__.append("flecha_escuadra")
 
 
 def _colocar(base, piezas, x_pt: float, y_pt: float, ancho_pt: float | None = None) -> None:
@@ -127,13 +190,15 @@ def llenar_ancho(s, gap: float | None = None) -> None:
 def centrar_bloque(s, aire_titulo: float = AIRE_TITULO, pie: float = PIE) -> float:
     """Centra el contenido entre el título (+aire) y el pie. Devuelve el desplazamiento en pt.
 
-    Regla de marca: se centra el contenido de cards bajo el encabezado, pero NO las cifras,
-    las imágenes, las tablas ni las hojas de trabajo, que van arriba, pegadas al título.
-    Por eso la función no hace nada si la slide tiene cifras o imágenes de contenido."""
-    if any(f.name.startswith(("metric_", "photo_", "image_")) or getattr(f, "has_table", False) for f in s.shapes):
+    Regla de marca (D4, 0.2.0): se centran en vertical las cards, las tablas, las matrices y
+    el bloque imagen + texto. NO las cifras (`metric_`) ni las hojas de trabajo (renglones
+    `writing_line`), que van arriba, pegadas al título: con ellas la función no hace nada.
+    El encabezado, las notas del pie y la marca no se mueven."""
+    if any(f.name.startswith(("metric_", "writing_line")) for f in s.shapes):
         return 0.0
     titulo = next((f for f in s.shapes if f.name.startswith("title")), None)
-    bloque = [f for f in s.shapes if not _marca(f) and not f.name.startswith(("title", "subtitle", "kicker"))]
+    bloque = [f for f in s.shapes
+              if not _marca(f) and not f.name.startswith(("title", "subtitle", "kicker", "note"))]
     if not titulo or not bloque:
         return 0.0
     arriba = min(f.top for f in bloque) / PT
@@ -171,6 +236,42 @@ def reemplazar_marcador(s, foto: str | Path, texto: str = "Colocar imagen"):
         pic.crop_top = pic.crop_bottom = sobra / 2
     marco._element.getparent().remove(marco._element)
     return pic
+
+
+def quitar_fondo_blanco(s, forma, umbral: int = 245) -> bool:
+    """Quita el fondo blanco de una captura, un gráfico o un diagrama (solo en slides claras).
+
+    Usa el mismo relleno que el motor (`neo_refactor.bg_clear`): lo casi blanco conectado con
+    el borde queda transparente. Reemplaza la imagen de la forma por el PNG limpio y conserva
+    su posición, tamaño y recorte. Devuelve False si no correspondía (la imagen ya tenía
+    transparencia, no había fondo que quitar o se iría más del 70 % de la imagen)."""
+    import io
+    import sys
+
+    from pptx.oxml.ns import qn
+
+    motor = Path(__file__).resolve().parents[2] / "motor"
+    if str(motor) not in sys.path:
+        sys.path.insert(0, str(motor))
+    from neo_refactor.bg_clear import clear_white_background
+    from PIL import Image
+
+    blip = forma._element.find(".//" + qn("a:blip"))
+    if blip is None or blip.get(qn("r:embed")) is None:
+        raise ValueError(f"«{forma.name}» no es una imagen")
+    viejo = blip.get(qn("r:embed"))
+    with Image.open(io.BytesIO(s.part.related_part(viejo).blob)) as im:
+        im.load()
+        limpia = clear_white_background(im, umbral)
+    if limpia is None:
+        return False
+    png = io.BytesIO()
+    limpia.save(png, "PNG", optimize=True)
+    png.seek(0)
+    _parte, nuevo = s.part.get_or_add_image_part(png)
+    blip.set(qn("r:embed"), nuevo)
+    s.part.drop_rel(viejo)   # solo si ninguna otra forma de la slide la usa
+    return True
 
 
 def borrar_slide(prs, numero: int) -> None:

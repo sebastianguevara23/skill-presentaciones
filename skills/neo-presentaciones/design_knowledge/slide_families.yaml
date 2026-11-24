@@ -85,18 +85,21 @@ families:
       logo_default: left
       logo_box_pt: [45, 31.4, 96.7, 19.3]
       title_box_pt: [45, 170, 630, 48]
-      subtitle_box_pt: [45, 232, 540, 48]
       footer_box_pt: [45, 360.4, 160, 14.6]
-      title_style: {font: Montserrat Black, size_pt: 36, color: FFFFFF, emphasis_color: 9AAFFE}
+      # Separador NEO (D1, 2026-11-23). Un solo estilo: el de tokens.yaml → styles.dark.title.
+      # Una línea, de 45 a 32 pt; si no entra, dos líneas (issue separator_title_two_lines).
+      title_style: {font: Montserrat ExtraBold, size_pt: 45, min_pt: 32, max_lines: 1, color: FFFFFF,
+                    emphasis_color: C5D5F7, italic: false}
       title_multiline_line_spacing: 0.8   # título en dos líneas o más (salto del autor o corte)
       title_emphasis_rule:
-        two_words: second_word
-        three_words_with_connector: final_meaningful_word
-        connectors: [y, '&']
-        connector_color: FFFFFF
+        first_word: base_color          # blanco
+        rest: emphasis_color            # blue_pale, ExtraBold, sin itálica
         single_word: base_color
-      single_word_companion: neo_outline_geometry
-      single_word_companion_required: true
+      # Línea azul bajo el título (tokens.yaml → components.separator_line): 125 × 4 pt, 14 pt
+      # bajo el título y alineada a su x. El subtítulo va debajo de la línea.
+      separator_line: {fill: 2D5BFF, width_pt: 125, height_pt: 4, gap_pt: 14}
+      single_word_companion: null       # sin patrón geométrico (D1)
+      single_word_companion_required: false
       single_word_copy_policy: no_invented_subtitle
       subtitle_style: {font: Montserrat Medium, size_pt: 11, color: C5D5F7}
       footer_style: {font: Montserrat, size_pt: 12, bold: true, color: C5D5F7}

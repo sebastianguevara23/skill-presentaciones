@@ -216,6 +216,9 @@ class SlideClassification(BaseModel):
     banner: str | None = None
     # Imagen editorial: imágenes completas y bloques de mensaje junto a ellas.
     images: list[str] = Field(default_factory=list)
+    # Fondo blanco de las capturas, gráficos y diagramas (D2, 0.2.0): en slides claras se quita
+    # por defecto (`bg_clear.py`); "keep" lo conserva en esta slide. Nunca se quita en oscuras.
+    image_background: Literal["clear", "keep"] = "clear"
     body: list[str] = Field(default_factory=list)
     # Roles por párrafo que el plan trae para una caja de `body` (el título y su lista en la
     # misma caja): id local → un rol por párrafo no vacío.
@@ -224,12 +227,21 @@ class SlideClassification(BaseModel):
     columns: int | None = None
     card_style: CardStyle = "outline"
     variant: str | None = None
+    # Matriz: columna destacada (2.5), 1-based tal como se ve (la de rótulos cuenta como 1).
+    # Cabecera en blue y celdas en blue_pale con alfa (`tokens.matrix.highlight_*`).
+    highlight_column: int | None = Field(default=None, ge=1)
     # Plantilla para completar: los componentes crecen hasta ocupar el alto disponible.
     fill: bool = False
     # Piso de letra autorizado por la persona (`RuleException` min_font_size); None = el de marca.
     font_floor: float | None = None
     # Cambios de estilo pedidos por la persona (`StyleOverride`), aplicados al componer.
     style_overrides: list["StyleOverride"] = Field(default_factory=list)
+    # Textos que la persona aprobó cambiar (un título corto): id local → `TextOverride`. El
+    # motor los reemplaza antes de componer y la integridad compara el texto nuevo.
+    text_overrides: dict[str, "TextOverride"] = Field(default_factory=dict)
+    # Cita de la persona que aprobó juntar rótulos repetidos (cards → matriz): `verificar` no
+    # bloquea una palabra que falta si sigue al menos una vez en la slide. Las cifras, sí.
+    consolidate_labels: str | None = None
     # Composición libre (`layout: free`): el árbol de la gramática v1 y las unidades de sus
     # bloques compuestos que no son `card` (`quadrant`, `row`, `circle`, `block`).
     free_layout: "FreeLayout | None" = None
@@ -299,6 +311,9 @@ class DeckClassification(BaseModel):
     # En esas slides, las imágenes que el plan marcó como marca (un logo antiguo que no está en
     # `known_logos`): se retiran, porque la marca vigente la pone el shell. Índice → shape ids.
     shell_brand: dict[int, list[int]] = Field(default_factory=dict)
+    # Textos aprobados (`text_overrides`) de las slides que no se recomponen (keep_layout o no
+    # seleccionadas): índice de slide → id local → `TextOverride`. Se reemplazan en el PPTX.
+    shell_text_overrides: dict[int, dict[str, "TextOverride"]] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------- manifiesto y plan (MCP App)
@@ -459,6 +474,18 @@ class StyleOverride(BaseModel):
         return role == self.target or role.startswith(self.target + "_")
 
 
+class TextOverride(BaseModel):
+    """Texto que la PERSONA aprobó para un elemento (p. ej. el título corto que se le propuso).
+
+    El motor reemplaza el texto del elemento antes de componer: conserva el formato del primer
+    run y cada `\\n` abre un párrafo. La integridad saca de la comparación el texto viejo y
+    exige el nuevo; el resto de la slide se verifica como siempre. `reason` cita la aprobación.
+    """
+
+    text: str = Field(min_length=1, max_length=2000)
+    reason: str = Field(min_length=3, max_length=240)
+
+
 # ---------------------------------------------------------------- composición libre
 # Gramática v1: `design_knowledge/free_layout/grammar.md`. El modelo describe; el motor mide,
 # dibuja y audita. Solo a pedido explícito de la persona (plans/composicion-libre.md).
@@ -581,8 +608,17 @@ class SlidePlan(BaseModel):
     confidence: Literal["high", "medium", "low"] | None = None
     evidence: str | None = Field(default=None, max_length=240)
     asset_classes: dict[str, str] = Field(default_factory=dict)
+    # Fondo blanco de las capturas, gráficos y diagramas en slides claras: "clear" (por defecto)
+    # lo quita; "keep" lo conserva en esta slide (D2, 0.2.0).
+    image_background: Literal["clear", "keep"] = "clear"
+    # Matriz: columna destacada, 1-based tal como se ve (la de rótulos cuenta como 1).
+    highlight_column: int | None = Field(default=None, ge=1)
     rule_exceptions: list[RuleException] = Field(default_factory=list)
     style_overrides: list[StyleOverride] = Field(default_factory=list)
+    # Textos que la persona aprobó cambiar: id del elemento (`s3:t1`) → `TextOverride`.
+    text_overrides: dict[str, TextOverride] = Field(default_factory=dict)
+    # Cita de la persona que aprobó juntar los rótulos repetidos de la slide (cards → matriz).
+    consolidate_labels: str | None = Field(default=None, max_length=240)
     # Composición libre (`composition_layout: free`); None con cualquier layout del catálogo.
     free_layout: FreeLayout | None = None
     # F5b: diseño copiado de otra slide e íconos prestados de otra slide del mismo deck, solo a
@@ -759,6 +795,8 @@ class RRect(BaseModel):
     group: str
     # Acento de marca sin contenido (composición libre): sale como `NEO_BRAND_<rol>`.
     brand: bool = False
+    # Opacidad del relleno (0–1; la columna destacada de la matriz); None = opaco.
+    alpha: float | None = None
 
 
 class RPicture(BaseModel):
@@ -811,7 +849,13 @@ class SlideReport(BaseModel):
     issues: list[Issue] = Field(default_factory=list)
     content_integrity: dict = Field(default_factory=dict)
     stats: dict = Field(default_factory=dict)
+    # Textos aprobados que el motor aplicó: `{"id": "s3:t1", "original", "text", "reason"}`.
+    # `verificar` los lee de aquí para sacarlos de la comparación.
+    text_overrides: list[dict] = Field(default_factory=list)
+    # Cita de la aprobación para juntar rótulos repetidos (la usa `verificar`).
+    consolidate_labels: str | None = None
 
 
-# `SlideClassification` nombra a `StyleOverride`, que se define después.
+# `SlideClassification` nombra a `StyleOverride` y `TextOverride`, que se definen después.
 SlideClassification.model_rebuild()
+DeckClassification.model_rebuild()

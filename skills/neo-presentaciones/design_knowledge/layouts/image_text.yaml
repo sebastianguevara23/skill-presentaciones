@@ -29,6 +29,17 @@ geometry:
   image_ratio: 0.4
   # si el mensaje no cabe a 11 pt, la imagen cede ancho en estos pasos antes del desborde
   image_ratio_fallbacks: [0.35, 0.3]
+  # Imagen protagonista (0.2.0, deck de cliente: capturas de 500 pt ilegibles). Si todas
+  # las imágenes son capturas, gráficos o diagramas (`asset_classes` screenshot, chart,
+  # diagram) y hay mensaje, el texto va en una columna de `text_column` (más angosta si el
+  # texto ocupa menos, nunca bajo `text_column_min`) y la imagen toma el resto del ancho sin
+  # perder su proporción. Si el mensaje no cabe a 11 pt, la columna se ensancha por
+  # `text_column_steps`; después, el modo de siempre (`image_ratio` y sus pasos). Imagen y
+  # texto van alineados arriba (`align`) y el bloque se centra en horizontal y en vertical
+  # entre el encabezado y el pie (`center_block`). El texto no crece más que `body_max`: la
+  # protagonista es la imagen. Las fotos siguen con `image_ratio`.
+  protagonist: {text_column: 250, column_gap: 22, align: top, center_block: true,
+                text_column_steps: [290, 330], body_max: 12}
   column_gap: 22
   image_gap: 8
   paragraph_gap: 8

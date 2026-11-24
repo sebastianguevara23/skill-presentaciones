@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from neo_refactor.schemas import (
     ASSET_CLASSES, STYLE_GROUPS, AnalysisPlan, CardRole, FreeLayout, KeepLayout, RuleException, StyleOverride,
+    TextOverride,
 )
 
 NON_CONTENT_ROLES = ("decorative", "brand")
@@ -34,13 +35,21 @@ class DecisionSlide(BaseModel):
     family: str | None = None
     composition_layout: str | None = None
     variant: str | None = None
+    # Matriz: columna destacada, 1-based tal como se ve (la de rótulos cuenta como 1).
+    highlight_column: int | None = Field(default=None, ge=1)
     roles: dict[str, str] = Field(default_factory=dict)
     paragraph_roles: dict[str, list[CardRole]] = Field(default_factory=dict)
     split_parts: list[list[str]] | None = None
+    # "keep": las capturas, gráficos y diagramas de esta slide conservan su fondo blanco.
+    image_background: Literal["keep"] | None = None
     apply_to_group: bool = False
     keep_layout: str | None = None
     free_layout: FreeLayout | None = None
     style_overrides: list[StyleOverride] | None = None
+    # Textos que la persona aprobó cambiar (título corto): `{"s3:t1": {"text", "reason"}}`.
+    text_overrides: dict[str, TextOverride] | None = None
+    # Cita de la persona que aprobó juntar los rótulos repetidos (cards → matriz).
+    consolidate_labels: str | None = Field(default=None, max_length=240)
     rule_exceptions: list[RuleException] | None = None
     asset_classes: dict[str, str] = Field(default_factory=dict)
     evidence: str | None = Field(default=None, max_length=240)
@@ -135,6 +144,10 @@ def aplicar(engine, manifest, plan_skill: PlanSkill) -> tuple[AnalysisPlan, dict
                 raise PlanError(f"slide {d.slide}: la variante «{d.variant}» no existe para {s.family} "
                                 f"({', '.join(permitidas) or 'sin variantes'})")
             s.archetype = d.variant
+        if d.highlight_column is not None:
+            s.highlight_column = d.highlight_column
+        if d.image_background is not None:
+            s.image_background = d.image_background
         if d.split_parts is not None:
             s.split_parts = d.split_parts
         if d.roles or d.paragraph_roles:
@@ -162,6 +175,15 @@ def aplicar(engine, manifest, plan_skill: PlanSkill) -> tuple[AnalysisPlan, dict
             if malos:
                 raise PlanError(f"slide {d.slide}: style_overrides con destino desconocido {', '.join(malos)}")
             s.style_overrides = list(d.style_overrides)
+        if d.text_overrides is not None:
+            textos = {e.id for e in manifest.slide(sid).elements if e.kind == "text"}
+            malos = sorted(set(d.text_overrides) - textos)
+            if malos:
+                raise PlanError(f"slide {d.slide}: text_overrides solo acepta textos de la slide "
+                                f"({', '.join(malos)}; los ids salen de `neo.py leer`)")
+            s.text_overrides = dict(d.text_overrides)
+        if d.consolidate_labels is not None:
+            s.consolidate_labels = d.consolidate_labels.strip() or None
         if d.asset_classes:
             imagenes = {e.id for e in manifest.slide(sid).elements if e.kind == "image"}
             malos = sorted(set(d.asset_classes) - imagenes)

@@ -53,6 +53,7 @@ from .slide_marker import write_marker
 from .source_manifest import build_source_manifest
 from .source_manifest import PARSER_VERSION
 from .source_output_mapping import mapping_from_outputs, validate_mapping
+from . import text_overrides as texts_ok
 from .validator import validate
 from .visual_contract import load_visual_contract, visual_hash
 
@@ -619,12 +620,26 @@ class RefactorEngine:
         src = parse_deck(deck_path, self._job_dir(deck_path) / "media")
         source_manifest = build_source_manifest(deck_path, deck=src)
         # Logo del cliente que marcó el plan: la marca de cada slide pasa a ser NEO | cliente.
-        client_logo = cobrand.from_classification(src, classification_model, self._job_dir(deck_path) / "cobrand")
+        # `redisenar --logo-cliente RUTA` deja la imagen en `client_logo_path` (gana al plan) y
+        # `--logo-cliente-oscuro`, el modo de la variante oscura en `client_logo_dark`.
+        client_logo = cobrand.from_classification(
+            src, classification_model, self._job_dir(deck_path) / "cobrand",
+            path=getattr(self, "client_logo_path", None), dark_mode=getattr(self, "client_logo_dark", "auto"))
         composer = Composer(kn, classification_model.asset_classes, client_logo)
 
         plan: dict[int, SlideReport] = {}
         rendered = {}
         keep_layout = classification_model.keep_layout
+        # Textos que la persona aprobó cambiar (`text_overrides`) y su cita para juntar rótulos
+        # repetidos (`consolidate_labels`), por slide de origen. `applied_texts`: los que se aplicaron.
+        requested_texts = {**classification_model.shell_text_overrides}
+        consolidate = {}
+        for entry in classification_model.slides:
+            if entry.text_overrides:
+                requested_texts.setdefault(entry.slide, entry.text_overrides)
+            if entry.consolidate_labels:
+                consolidate.setdefault(entry.slide, entry.consolidate_labels)
+        applied_texts: dict[int, dict] = {}
         for spec in src.slides:
             entries = cls.get(spec.index, [])
             if spec.hidden:
@@ -649,6 +664,12 @@ class RefactorEngine:
                 missing = [element_id for element_id in entry.assigned_ids() if element_id not in spec.element_ids()]
                 if missing:
                     raise ValueError(f"slide {entry.slide}: ids inexistentes en la clasificación: {missing}")
+            if spec.index in requested_texts:
+                if wrong := texts_ok.unknown(spec, requested_texts[spec.index]):
+                    raise ValueError(f"slide {spec.index}: text_overrides apunta a textos inexistentes: {wrong}")
+                # El texto aprobado entra antes de componer: el layout se mide con él.
+                spec = texts_ok.apply_to_spec(spec, requested_texts[spec.index])
+                applied_texts[spec.index] = requested_texts[spec.index]
             if any(shape.chart is not None for shape in spec.shapes):
                 # Ningún layout tiene slot de gráfico todavía y `redraw` vacía la slide: el
                 # gráfico nativo se perdería. Se queda en su lugar, con la marca (fase 2).
@@ -694,6 +715,10 @@ class RefactorEngine:
         position = 0  # posición 0-based de la slide de origen dentro del deck de salida
         for idx, slide in enumerate(list(presentation.slides), 1):
             report = plan[idx]
+            if report.mode in ("brand_shell", "preserved") and requested_texts.get(idx):
+                # La slide conserva su organización: el texto aprobado se reemplaza en el PPTX.
+                done = texts_ok.apply_to_slide(slide, src.slide(idx), requested_texts[idx])
+                applied_texts[idx] = {key: requested_texts[idx][key] for key in done}
             if report.mode == "redesign":
                 parts = rendered[idx]
                 redraw(slide, parts[0][1], presentation.slide_width, presentation.slide_height, scale)
@@ -809,6 +834,13 @@ class RefactorEngine:
                     "policy_exception": "despedida universal de marca autorizada, Referencia v2, slide 32"}
                 report.score = 100
                 continue
+            # Textos aprobados: el reporte guarda el original y el nuevo, y la integridad compara
+            # el nuevo. Con `consolidate_labels`, los rótulos juntados no bloquean (las cifras, sí).
+            approved = applied_texts.get(idx) or {}
+            report.text_overrides = texts_ok.report_entries(src.slide(idx), approved)
+            report.consolidate_labels = consolidate.get(idx)
+            requested = {"text_overrides": {key: item.text for key, item in approved.items()},
+                         "consolidate": bool(report.consolidate_labels)}
             if report.mode == "redesign":
                 parts = rendered[idx]
                 scores, issues = zip(*(validate(rendered_part, kn) for _entry, rendered_part in parts))
@@ -818,12 +850,12 @@ class RefactorEngine:
                     src.slide(idx),
                     [produced.slide(index) for index in report.output_slides],
                     skip_ids=set().union(*(set(entry.brand) | set(entry.decorative) for entry, _ in parts)),
-                    repeated_ids=_shared_slot_ids(parts),
+                    repeated_ids=_shared_slot_ids(parts), **requested,
                 )
             else:
                 report.content_integrity = integrity.check(
                     src.slide(idx), [produced.slide(index) for index in report.output_slides],
-                    skip_shas=removed.get(idx, set()),
+                    skip_shas=removed.get(idx, set()), **requested,
                 )
                 report.score = max(0, 100 - sum(15 if item.severity == "error" else 5 for item in report.issues))
             if not report.content_integrity["preserved"]:
@@ -847,6 +879,10 @@ class RefactorEngine:
                 "preserved": all(report.content_integrity["preserved"] for report in active),
                 "numeric_changes": sum(report.content_integrity["numeric_changes"] for report in active),
                 "removed_content": sum(len(report.content_integrity["removed_content"]) for report in active),
+                # Textos aprobados por la persona y aplicados (`text_overrides`).
+                "requested_changes": sum(len(report.text_overrides) for report in active),
+                # Imágenes con otros bytes que siguen siendo la del origen (`same_picture`).
+                "images_treated": sum(len(report.content_integrity.get("images_treated", [])) for report in active),
             },
             "average_design_score": round(sum(report.score for report in active) / max(1, len(active)), 1),
             "file_mb": round(out_path.stat().st_size / 1e6, 1),
@@ -886,7 +922,7 @@ class RefactorEngine:
             entries = entries_by_slide.get(spec.index, [])
             if spec.hidden or not entries:
                 continue
-            spec = _with_borrowed(spec, entries, src)
+            spec = texts_ok.apply_to_spec(_with_borrowed(spec, entries, src), entries[0].text_overrides)
             overflow = [item for entry in entries for item in composer.compose(spec, entry).compose_issues
                         if item.startswith(OVERFLOW_CODES)]
             slides.append({"slide": spec.index, "mode": "brand_shell" if overflow else "redesign",
